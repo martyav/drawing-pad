@@ -1,0 +1,33 @@
+:root {
+    --color: black;
+    --cap: 'round'; /* Can you do this? */
+    --join: 'round';
+}
+
+body {
+    background: white;
+    font-size: 16px;
+    margin: 0;
+    padding: 0;
+}
+
+main {
+    display: grid;
+    grid-template-columns: 20vw 80vw;
+    grid-template-rows: 100vh;
+}
+
+#controls {
+    height: 100vh;
+    border:1px solid red;
+}
+
+ul {
+    list-style: none;
+}
+
+#frame {
+    display: inline-block;
+    height: 100vh;
+    border:1px solid green;
+}
