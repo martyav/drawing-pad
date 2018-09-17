@@ -3,6 +3,7 @@
     --width: 'undefined';
     --cap: 'undefined'; 
     --join: 'undefined';
+    --isDrawing: 'undefined';
 }
 
 body {
