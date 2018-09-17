@@ -1,7 +1,9 @@
+Check out the drawing pad at [https://martyav.github.io/drawing-pad/](https://martyav.github.io/drawing-pad/)
+
 # To-Do
 
 * [Add drop down menus for cap and join](https://www.w3schools.com/howto/howto_js_dropdown.asp)
-* Make this into a github page
+* ~~Make this into a github page~~
 * ~~Wire up event handlers correctly~~
 * ~~Figure out how all the variable switching will be happening~~
 * Debug debug debug:
