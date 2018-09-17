@@ -1,4 +1,8 @@
-function setCanvasProperties(context) {
+function setCanvasProperties(canvas, context) {
+  // Width/height is set in this way here bc naively using css to set it simply causes the canvas to stretch without redefining the number of pixels, resulting in stroke drawing that is far off from the cursor. See https://stackoverflow.com/questions/10214873/make-canvas-as-wide-and-as-high-as-parent and https://stackoverflow.com/questions/11060110/drawing-at-cursor-position-on-canvas-with-javascript 
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+
   context.strokeStyle = document.body.style.getPropertyValue('--color');
   context.lineWidth = document.body.style.getPropertyValue('--width');
   context.lineCap = document.body.style.getPropertyValue('--cap');;
@@ -83,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const inputs = Array.from(document.querySelectorAll(`#controls input`));
   const eraseAllButton = document.querySelector('#eraseAll');
   
-  setCanvasProperties(context);
+  setCanvasProperties(canvas, context);
 
   canvas.addEventListener('mousemove', draw);
   canvas.addEventListener('mousedown', () => {
