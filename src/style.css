@@ -1,7 +1,8 @@
 :root {
-    --color: black;
-    --cap: 'round'; /* Can you do this? */
-    --join: 'round';
+    --color: 'undefined';
+    --width: 'undefined';
+    --cap: 'undefined'; 
+    --join: 'undefined';
 }
 
 body {
