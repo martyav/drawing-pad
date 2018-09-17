@@ -19,6 +19,7 @@ main {
 }
 
 #controls {
+    width: 100%;
     height: 100vh;
     border:1px solid red;
 }
@@ -27,8 +28,9 @@ ul {
     list-style: none;
 }
 
-#frame {
-    display: inline-block;
+#drawHere {
+    width: 100%;
     height: 100vh;
     border:1px solid green;
+    background: white;
 }

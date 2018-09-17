@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,17 +9,18 @@
     <link rel="stylesheet" type="text/css" media="screen" href="src/style.css" />
     <script src="src/script.js"></script>
 </head>
+
 <body>
     <main>
-        <div id = 'controls'>
+        <div id='controls'>
             <ul>
                 <li>
-                    <label for = 'color'>Color</label>
-                    <input id = 'color' type = 'color' name = 'color' value = '#ff0000'>
+                    <label for='color'>Color</label>
+                    <input id='color' type='color' name='color' value='#ff0000'>
                 </li>
                 <li>
-                    <label for = 'width'>Stroke Width</label>
-                    <input id = 'width' type = 'range' name = 'width' min = '1' max = '300' value = '10'>
+                    <label for='width'>Stroke Width</label>
+                    <input id='width' type='range' name='width' min='1' max='300' value='10'>
                 </li>
                 <li>
                     Cap goes here
@@ -28,9 +30,10 @@
                 </li>
             </ul>
         </div>
-        <div id = 'frame'>
-            <canvas>Unfortunately, you need to have Javascript loaded to run this</canvas>
-        </div>
+        <canvas id='drawHere' width='800' height='800'>
+            Unfortunately, you need to have Javascript loaded to run this
+        </canvas>
     </main>
 </body>
+
 </html>
