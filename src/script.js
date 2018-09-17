@@ -39,7 +39,6 @@ function handleUpdate() {
   const localCanvas = document.querySelector("#drawHere");
   const localContext = localCanvas.getContext("2d");
 
-
   switch (this.name) {
     case 'color':
       localContext.strokeStyle = document.body.style.getPropertyValue('--color');
@@ -58,6 +57,14 @@ function handleUpdate() {
   }
 }
 
+function eraseAll() {
+  console.log('Erase all was clicked');
+  const localCanvas = document.querySelector("#drawHere");
+  const localContext = localCanvas.getContext("2d");
+
+  localContext.clearRect(0, 0, localCanvas.width, localCanvas.height);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const colorInput = document.querySelector('#color').value;
   const widthInput = document.querySelector('#width').value;
@@ -74,6 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.querySelector("#drawHere");
   const context = canvas.getContext("2d"); // setting alpha to false optimizes rendering...but then the canvas bg is rendered black, and changing the color is quite slow
   const inputs = Array.from(document.querySelectorAll(`#controls input`));
+  const eraseAllButton = document.querySelector('#eraseAll');
   
   setCanvasProperties(context);
 
@@ -91,4 +99,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   inputs.forEach(input => input.addEventListener('change', handleUpdate));
+  eraseAllButton.addEventListener('click', eraseAll);
 });
