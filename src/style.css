@@ -1,9 +1,12 @@
 :root {
+    /* Our source of truth */
     --color: 'undefined';
     --width: 'undefined';
     --cap: 'undefined'; 
     --join: 'undefined';
     --isDrawing: 'undefined';
+    --lastX: 'undefined';
+    --lastY: 'undefined';
 }
 
 body {
@@ -17,6 +20,12 @@ main {
     display: grid;
     grid-template-columns: 20vw 80vw;
     grid-template-rows: 100vh;
+}
+
+label {
+    display: block;
+    margin-bottom: 4px;
+    margin-top: 4px;
 }
 
 #controls {
