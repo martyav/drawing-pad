@@ -2,7 +2,8 @@ Check out the drawing pad at [https://martyav.github.io/drawing-pad/](https://ma
 
 # To-Do
 
-* [Add drop down menus for cap and join](https://www.w3schools.com/howto/howto_js_dropdown.asp)
+* [Add drop down menus for cap and join](https://www.w3schools.com/howto/howto_js_dropdown.asp) 
+    * In progress on dev branch -- but instead of cap and join, which don't really make sense in an art context, we're just doing cap and we're calling it nib, like a pen's point
 * ~~Make this into a github page~~
 * ~~Wire up event handlers correctly~~
 * ~~Figure out how all the variable switching will be happening~~
