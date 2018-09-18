@@ -2,8 +2,7 @@
     /* Our source of truth */
     --color: 'undefined';
     --width: 'undefined';
-    --cap: 'undefined';
-    --join: 'undefined';
+    --nib: 'undefined';
     --isDrawing: 'undefined';
     --lastX: 'undefined';
     --lastY: 'undefined';
