@@ -36,26 +36,22 @@ function draw(event) {
 
 function handleUpdate() {
     console.log('handleUpdate was triggered');
-    console.log(this.name);
-    document.body.style.setProperty(`--${this.name}`, this.value);
+    const property = `--${this.name}`;
+    document.body.style.setProperty(property, this.value);
 
     const localCanvas = document.querySelector("#drawHere");
     const localContext = localCanvas.getContext("2d");
+    const changedValue = document.body.style.getPropertyValue(property);
 
     switch (this.name) {
         case 'color':
-            localContext.strokeStyle = document.body.style.getPropertyValue('--color');
-            console.log('color was triggered');
+            localContext.strokeStyle = changedValue;
             break;
         case 'width':
-            localContext.lineWidth = document.body.style.getPropertyValue('--width');
-            console.log('width was triggered');
+            localContext.lineWidth = changedValue;
             break;
-        case 'cap':
-            localContext.lineCap = document.body.style.getPropertyValue('--cap');
-            break;
-        case 'join':
-            localContext.lineJoin = document.body.style.getPropertyValue('--join');
+        case 'nib':
+            localContext.lineCap = changedValue;
             break;
     }
 }
@@ -69,9 +65,10 @@ function eraseAll() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const colorInput = document.querySelector('#color').value;
-    const widthInput = document.querySelector('#width').value;
-    const nibInput = Array.from(document.querySelectorAll('option[value]')).find(x => x.hasAttribute('selected')).getAttribute('value');
+    const colorInput = document.querySelector('[name=color]').value;
+    const widthInput = document.querySelector('[name=width]').value;
+    const nibInput = document.querySelector('[name=nib]').value;
+
 
     document.body.style.setProperty("--color", `${ colorInput }`);
     document.body.style.setProperty('--width', `${ widthInput }`);
@@ -83,6 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.querySelector("#drawHere");
     const context = canvas.getContext("2d"); // setting alpha to false optimizes rendering...but then the canvas bg is rendered black, and changing the color is quite slow
     const inputs = Array.from(document.querySelectorAll(`#controls input`));
+    const nibMenu = document.querySelector('[name=nib]');
     const eraseAllButton = document.querySelector('#eraseAll');
 
     setCanvasProperties(canvas, context);
@@ -101,5 +99,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     inputs.forEach(input => input.addEventListener('change', handleUpdate));
+    nibMenu.addEventListener('change', handleUpdate);
     eraseAllButton.addEventListener('click', eraseAll);
 });
