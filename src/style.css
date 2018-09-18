@@ -42,30 +42,8 @@ button {
     margin-top: 4px;
 }
 
-#dropDown {
-    position: relative;
-    display: inline-block;
-}
-
-.options {
-    /* display: none;*/
-    position: absolute;
-    border: 1px solid black;
-    background: #eeeeee;
-}
-
-.option {
-    display: block;
-    padding: 8px;
-    text-align: center;
-}
-
-.option:hover {
-    background: hsl(180, 50%, 90%);
-}
-
-.showOptions {
-    display: block;
+select {
+    margin-bottom: 50px;
 }
 
 ul {
