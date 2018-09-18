@@ -72,7 +72,6 @@ function eraseAll() {
 document.addEventListener("DOMContentLoaded", () => {
   const colorInput = document.querySelector('#color').value;
   const widthInput = document.querySelector('#width').value;
-  console.log(widthInput);
   
   document.body.style.setProperty("--color", `${ colorInput }`);
   document.body.style.setProperty('--width', `${ widthInput }`);
