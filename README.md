@@ -11,7 +11,11 @@ Check out the drawing pad at [https://martyav.github.io/drawing-pad/](https://ma
     * ~~LastX & lastY are behaving oddly...strokes are often drawn far to right of cursor~~
     * Solution to above: Canvas was being stretched via CSS to fit space on page; you need to set the width and height to offsetWidth & offsetHeight with Javascript to account for the change in size when styling kicks in
  * Save button
+ * Undo button
+ * Touch events
+ * Keyboard short cuts?
  * Brushes?
  * Gamify
-     * Add drawing prompts
+     * Add drawing prompts - in progress
+     * Add checkboxes for category: Fun/Serious
      * Add optional timer
