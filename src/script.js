@@ -24,14 +24,18 @@ function handleUpdate() {
 
     const localCanvas = document.querySelector("#drawHere");
     const localContext = localCanvas.getContext("2d");
+    const colorLabel = document.querySelector('[for=color]');
+    const strokeLabel = document.querySelector('[for=width]');
     const changedValue = document.body.style.getPropertyValue(property);
 
     switch (property) {
         case '--color':
             localContext.strokeStyle = changedValue;
+            colorLabel.innerHTML = `Pen Color: ${ changedValue }`;
             break;
         case '--width':
             localContext.lineWidth = changedValue;
+            strokeLabel.innerHTML = `Pen Width: ${ changedValue }`;
             break;
         case '--nib':
             localContext.lineCap = changedValue;
@@ -65,6 +69,11 @@ function setCanvasProperties(canvas, context) {
     context.lineCap = document.body.style.getPropertyValue('--nib');;
 }
 
+function setLabels(colorLabel, strokeLabel) {
+    colorLabel.innerHTML = `Pen Color: ${ document.body.style.getPropertyValue('--color') }`;
+    strokeLabel.innerHTML = `Pen Width: ${ document.body.style.getPropertyValue('--width') }`;
+}
+
 function addEventHandlers(canvas, inputs, nibMenu, eraseAllButton) {
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mousedown', () => {
@@ -89,6 +98,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.querySelector("#drawHere");
     const context = canvas.getContext("2d"); // setting alpha to false optimizes rendering...but then the canvas bg is rendered black, and changing the color is quite slow
     const inputs = Array.from(document.querySelectorAll(`#controls input`));
+    const colorLabel = document.querySelector('[for=color]');
+    const strokeLabel = document.querySelector('[for=width]');
     const nibMenu = document.querySelector('[name=nib]');
     const eraseAllButton = document.querySelector('#eraseAll');
 
@@ -98,5 +109,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setCSSVariables(colorInput, widthInput, nibInput);
     setCanvasProperties(canvas, context);
+    setLabels(colorLabel, strokeLabel);
     addEventHandlers(canvas, inputs, nibMenu, eraseAllButton);
 });
