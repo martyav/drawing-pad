@@ -65,6 +65,19 @@ button {
     font-size: inherit;
 }
 
+button:active, input[type=color]:active {
+    transform: translate(3px, 3px);
+    box-shadow: none;
+}
+
+.disabled {
+    box-shadow: none;
+    background: #aaaaaa;
+    color: white;
+    border: 1px solid #666666;
+    cursor: not-allowed;
+}
+
 select {
     margin-bottom: 100px;
     border: 1px solid black;

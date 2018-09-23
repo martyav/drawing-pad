@@ -43,6 +43,14 @@ function handleUpdate() {
     }
 }
 
+function undo() {
+    console.log('Undo clicked');
+}
+
+function save() {
+    console.log('Save clicked');
+}
+
 function eraseAll() {
     const localCanvas = document.querySelector("#drawHere");
     const localContext = localCanvas.getContext("2d");
@@ -74,7 +82,7 @@ function setLabels(colorLabel, strokeLabel) {
     strokeLabel.innerHTML = `Pen Width: ${ document.body.style.getPropertyValue('--width') }`;
 }
 
-function addEventHandlers(canvas, inputs, nibMenu, eraseAllButton) {
+function addEventHandlers(canvas, inputs, nibMenu, undoButton, saveButton, eraseAllButton) {
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mousedown', () => {
         document.body.style.setProperty('--isDrawing', true);
@@ -91,6 +99,8 @@ function addEventHandlers(canvas, inputs, nibMenu, eraseAllButton) {
 
     inputs.forEach(input => input.addEventListener('change', handleUpdate));
     nibMenu.addEventListener('change', handleUpdate);
+    undoButton.addEventListener('click', undo);
+    saveButton.addEventListener('click', save);
     eraseAllButton.addEventListener('click', eraseAll);
 }
 
@@ -101,7 +111,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const colorLabel = document.querySelector('[for=color]');
     const strokeLabel = document.querySelector('[for=width]');
     const nibMenu = document.querySelector('[name=nib]');
-    const eraseAllButton = document.querySelector('#eraseAll');
+    const undoButton = document.getElementById('undo');
+    const saveButton = document.getElementById('save');
+    const eraseAllButton = document.getElementById('eraseAll');
 
     const colorInput = document.querySelector('[name=color]').value;
     const widthInput = document.querySelector('[name=width]').value;
@@ -110,5 +122,5 @@ document.addEventListener("DOMContentLoaded", () => {
     setCSSVariables(colorInput, widthInput, nibInput);
     setCanvasProperties(canvas, context);
     setLabels(colorLabel, strokeLabel);
-    addEventHandlers(canvas, inputs, nibMenu, eraseAllButton);
+    addEventHandlers(canvas, inputs, nibMenu, undoButton, saveButton, eraseAllButton);
 });
