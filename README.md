@@ -11,12 +11,12 @@ Check out the drawing pad at [https://martyav.github.io/drawing-pad/](https://ma
     * ~~LastX & lastY are behaving oddly...strokes are often drawn far to right of cursor~~
     * Solution to above: Canvas was being stretched via CSS to fit space on page; you need to set the width and height to offsetWidth & offsetHeight with Javascript to account for the change in size when styling kicks in
  * Responsiveness -- the menu & canvas size are inappropriate for small screens
- * Save button
- * Undo button
+ * Save button - WIP
+ * Undo button - WIP, related to save functionality (see [https://www.codicode.com/art/undo_and_redo_to_the_html5_canvas.aspx](https://www.codicode.com/art/undo_and_redo_to_the_html5_canvas.aspx))
  * Touch events
  * Keyboard short cuts?
  * Brushes?
  * Gamify
-     * Add drawing prompts - in progress
+     * Add drawing prompts - in progress (JSON added to dev branch)
      * Add checkboxes for category: Fun/Serious
      * Add optional timer
