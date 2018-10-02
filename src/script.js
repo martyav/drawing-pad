@@ -43,15 +43,35 @@ function handleUpdate() {
     }
 }
 
-function undo() {
-    console.log('Undo clicked');
+function restore() {
+    let savedDataUrl = localStorage.getItem('currentCanvas');
+    let savedImg = new Image();
+    savedImg.src = savedDataUrl;
+
+    const localCanvas = document.querySelector("#drawHere");
+    const localContext = localCanvas.getContext("2d");
+
+    localContext.drawImage(savedImg, 0, 0);
+
+    console.log(`Restored: ${savedImg.src}`);
 }
 
 function save() {
-    console.log('Save clicked');
+    const localCanvas = document.querySelector("#drawHere");
+
+    let imgAsDataUrl = localCanvas.toDataURL('image/png');
+
+    try {
+        localStorage.setItem('currentCanvas', imgAsDataUrl);
+        console.log('Successfully stored in local')
+    } catch (error) {
+        console.log(`Save failed: ${error}`);
+    }
 }
 
 function eraseAll() {
+    save();
+
     const localCanvas = document.querySelector("#drawHere");
     const localContext = localCanvas.getContext("2d");
 
@@ -85,6 +105,7 @@ function setLabels(colorLabel, strokeLabel) {
 function addEventHandlers(canvas, inputs, nibMenu, undoButton, saveButton, eraseAllButton) {
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mousedown', () => {
+        save();
         document.body.style.setProperty('--isDrawing', true);
         document.body.style.setProperty('--lastX', event.offsetX);
         document.body.style.setProperty('--lastY', event.offsetY);
@@ -99,7 +120,7 @@ function addEventHandlers(canvas, inputs, nibMenu, undoButton, saveButton, erase
 
     inputs.forEach(input => input.addEventListener('change', handleUpdate));
     nibMenu.addEventListener('change', handleUpdate);
-    undoButton.addEventListener('click', undo);
+    undoButton.addEventListener('click', restore);
     saveButton.addEventListener('click', save);
     eraseAllButton.addEventListener('click', eraseAll);
 }
