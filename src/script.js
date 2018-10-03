@@ -44,6 +44,8 @@ function handleUpdate() {
 }
 
 function restore() {
+    console.table(localStorage);
+
     let savedDataUrl = localStorage.getItem('currentCanvas');
     let savedImg = new Image();
     savedImg.src = savedDataUrl;
@@ -51,27 +53,33 @@ function restore() {
     const localCanvas = document.querySelector("#drawHere");
     const localContext = localCanvas.getContext("2d");
 
-    localContext.drawImage(savedImg, 0, 0);
+    localContext.clearRect(0, 0, localCanvas.width, localCanvas.height);
+    localContext.drawImage(savedImg, 0, 0, localCanvas.width, localCanvas.height);
 
-    console.log(`Restored: ${savedImg.src}`);
+    console.log(`Restored`);
+
+    restore();
 }
 
-function save() {
+function store() {
     const localCanvas = document.querySelector("#drawHere");
-
     let imgAsDataUrl = localCanvas.toDataURL('image/png');
+
+    localStorage.clear();
 
     try {
         localStorage.setItem('currentCanvas', imgAsDataUrl);
-        console.log('Successfully stored in local')
+        console.log('Successfully stored in local');
     } catch (error) {
-        console.log(`Save failed: ${error}`);
+        console.log(`Store failed: ${error}`);
     }
 }
 
-function eraseAll() {
-    save();
+function save() {
+    console.log('Save clicked')
+}
 
+function eraseAll() {
     const localCanvas = document.querySelector("#drawHere");
     const localContext = localCanvas.getContext("2d");
 
@@ -105,7 +113,6 @@ function setLabels(colorLabel, strokeLabel) {
 function addEventHandlers(canvas, inputs, nibMenu, undoButton, saveButton, eraseAllButton) {
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mousedown', () => {
-        save();
         document.body.style.setProperty('--isDrawing', true);
         document.body.style.setProperty('--lastX', event.offsetX);
         document.body.style.setProperty('--lastY', event.offsetY);
@@ -117,6 +124,7 @@ function addEventHandlers(canvas, inputs, nibMenu, undoButton, saveButton, erase
     canvas.addEventListener('mouseout', () => {
         document.body.style.setProperty('--isDrawing', false)
     });
+    canvas.addEventListener('mousedown', store);
 
     inputs.forEach(input => input.addEventListener('change', handleUpdate));
     nibMenu.addEventListener('change', handleUpdate);
@@ -139,6 +147,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const colorInput = document.querySelector('[name=color]').value;
     const widthInput = document.querySelector('[name=width]').value;
     const nibInput = nibMenu.value;
+
+    localStorage.clear();
+    store();
 
     setCSSVariables(colorInput, widthInput, nibInput);
     setCanvasProperties(canvas, context);
