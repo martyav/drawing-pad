@@ -18,6 +18,18 @@ function draw(event) {
     document.body.style.setProperty('--lastY', event.offsetY);
 }
 
+function disable(button) {
+    if (!button.hasAttribute('disabled')) {
+        button.disabled = true;
+    }
+}
+
+function enable(button) {
+    if (button.hasAttribute('disabled')) {
+        button.disabled = false;
+    }
+}
+
 function handleUpdate() {
     const property = `--${this.name}`;
     document.body.style.setProperty(property, this.value);
@@ -43,7 +55,7 @@ function handleUpdate() {
     }
 }
 
-function restore() {
+function restore(event) {
     console.table(localStorage);
 
     let savedDataUrl = localStorage.getItem('currentCanvas');
@@ -59,7 +71,7 @@ function restore() {
         localContext.drawImage(savedImg, 0, 0, localCanvas.width, localCanvas.height);
     }
 
-    console.log(`Restored`);
+    disable(event.target);
 }
 
 function store() {
@@ -74,12 +86,14 @@ function store() {
     }
 }
 
-function save() {
+function save(event) {
     store();
 
     let savedDataUrl = localStorage.getItem('currentCanvas');
 
     download(savedDataUrl, "drawing-from-drawing-pad.png", "image/png");
+
+    disable(event.target);
 }
 
 function eraseAll() {
@@ -87,6 +101,8 @@ function eraseAll() {
     const localContext = localCanvas.getContext("2d");
 
     localContext.clearRect(0, 0, localCanvas.width, localCanvas.height);
+    localContext.fillStyle = "white";
+    localContext.fillRect(5, 5, localCanvas.width, localCanvas.height); // off by 5 to preserve outline
 }
 
 function setCSSVariables(colorInput, widthInput, nibInput) {
@@ -105,7 +121,9 @@ function setCanvasProperties(canvas, context) {
 
     context.strokeStyle = document.body.style.getPropertyValue('--color');
     context.lineWidth = document.body.style.getPropertyValue('--width');
-    context.lineCap = document.body.style.getPropertyValue('--nib');;
+    context.lineCap = document.body.style.getPropertyValue('--nib');
+    context.fillStyle = "white";
+    context.fillRect(5, 5, canvas.width, canvas.height); // off by 5 to preserve outline
 }
 
 function setLabels(colorLabel, strokeLabel) {
@@ -117,6 +135,8 @@ function addEventHandlers(canvas, inputs, nibMenu, undoButton, saveButton, erase
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mousedown', () => {
         store();
+        enable(saveButton);
+        enable(undo);
         document.body.style.setProperty('--isDrawing', true);
         document.body.style.setProperty('--lastX', event.offsetX);
         document.body.style.setProperty('--lastY', event.offsetY);
@@ -137,7 +157,7 @@ function addEventHandlers(canvas, inputs, nibMenu, undoButton, saveButton, erase
 
 document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.querySelector("#drawHere");
-    const context = canvas.getContext("2d"); // setting alpha to false optimizes rendering...but then the canvas bg is rendered black, and changing the color is quite slow
+    const context = canvas.getContext("2d", {alpha: false}); // setting alpha to false optimizes rendering...but then the canvas bg is rendered black, and changing the color is quite slow
     const inputs = Array.from(document.querySelectorAll(`#controls input`));
     const colorLabel = document.querySelector('[for=color]');
     const strokeLabel = document.querySelector('[for=width]');
