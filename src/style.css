@@ -70,7 +70,7 @@ button:active, input[type=color]:active {
     box-shadow: none;
 }
 
-.disabled {
+button:disabled {
     box-shadow: none;
     background: #aaaaaa;
     color: white;
