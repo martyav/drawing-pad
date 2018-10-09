@@ -49,23 +49,22 @@ function restore() {
     let savedDataUrl = localStorage.getItem('currentCanvas');
     let savedImg = new Image();
     savedImg.src = savedDataUrl;
+    console.log("Src = " + savedImg.src);
 
     const localCanvas = document.querySelector("#drawHere");
     const localContext = localCanvas.getContext("2d");
 
-    localContext.clearRect(0, 0, localCanvas.width, localCanvas.height);
-    localContext.drawImage(savedImg, 0, 0, localCanvas.width, localCanvas.height);
+    savedImg.onload = () => { // If you do not specify the below code inside of a closure onload of the image, you will get an aggravating effect of the canvas clearing on the first click and then behaving correctly, i.e. restoring, on the second click
+        eraseAll();
+        localContext.drawImage(savedImg, 0, 0, localCanvas.width, localCanvas.height);
+    }
 
     console.log(`Restored`);
-
-    restore();
 }
 
 function store() {
     const localCanvas = document.querySelector("#drawHere");
     let imgAsDataUrl = localCanvas.toDataURL('image/png');
-
-    localStorage.clear();
 
     try {
         localStorage.setItem('currentCanvas', imgAsDataUrl);
@@ -113,10 +112,10 @@ function setLabels(colorLabel, strokeLabel) {
 function addEventHandlers(canvas, inputs, nibMenu, undoButton, saveButton, eraseAllButton) {
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mousedown', () => {
+        store();
         document.body.style.setProperty('--isDrawing', true);
         document.body.style.setProperty('--lastX', event.offsetX);
         document.body.style.setProperty('--lastY', event.offsetY);
-        document.body.style.setProperty('--isDrawing', true);
     });
     canvas.addEventListener('mouseup', () => {
         document.body.style.setProperty('--isDrawing', false)
@@ -124,7 +123,6 @@ function addEventHandlers(canvas, inputs, nibMenu, undoButton, saveButton, erase
     canvas.addEventListener('mouseout', () => {
         document.body.style.setProperty('--isDrawing', false)
     });
-    canvas.addEventListener('mousedown', store);
 
     inputs.forEach(input => input.addEventListener('change', handleUpdate));
     nibMenu.addEventListener('change', handleUpdate);
