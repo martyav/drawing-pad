@@ -1,3 +1,17 @@
+let globalPointPreserve = [];
+
+function disable(button) {
+    if (!button.hasAttribute('disabled')) {
+        button.disabled = true;
+    }
+}
+
+function enable(button) {
+    if (button.hasAttribute('disabled')) {
+        button.disabled = false;
+    }
+}
+
 function draw(event) {
     const isDrawing = JSON.parse(document.body.style.getPropertyValue('--isDrawing')); // we do this weird conversion because the value we get back is a string containing either the word true or false!
 
@@ -10,24 +24,14 @@ function draw(event) {
     const localLastX = document.body.style.getPropertyValue('--lastX');
     const localLastY = document.body.style.getPropertyValue('--lastY');
 
+    globalPointPreserve.push({x: localLastX, y: localLastY});
+
     localContext.beginPath();
-    localContext.moveTo(localLastX, localLastY);
-    localContext.lineTo(event.offsetX, event.offsetY);
+    localContext.moveTo(globalPointPreserve[0].x, globalPointPreserve[0].y);
+    globalPointPreserve.forEach(point => localContext.lineTo(point.x, point.y));
     localContext.stroke();
     document.body.style.setProperty('--lastX', event.offsetX);
     document.body.style.setProperty('--lastY', event.offsetY);
-}
-
-function disable(button) {
-    if (!button.hasAttribute('disabled')) {
-        button.disabled = true;
-    }
-}
-
-function enable(button) {
-    if (button.hasAttribute('disabled')) {
-        button.disabled = false;
-    }
 }
 
 function handleUpdate() {
@@ -86,9 +90,7 @@ function store() {
     }
 }
 
-function save(event) {
-    store();
-
+function downloadPic(event) {
     let savedDataUrl = localStorage.getItem('currentCanvas');
 
     download(savedDataUrl, "drawing-from-drawing-pad.png", "image/png");
@@ -96,13 +98,13 @@ function save(event) {
     disable(event.target);
 }
 
-function eraseAll() {
+function eraseAll() {    
     const localCanvas = document.querySelector("#drawHere");
     const localContext = localCanvas.getContext("2d");
 
     localContext.clearRect(0, 0, localCanvas.width, localCanvas.height);
     localContext.fillStyle = "white";
-    localContext.fillRect(5, 5, localCanvas.width, localCanvas.height); // off by 5 to preserve outline
+    localContext.fillRect(5, 5, (localCanvas.width - 10), (localCanvas.height - 10)); // off by 5 to preserve outline
 }
 
 function setCSSVariables(colorInput, widthInput, nibInput) {
@@ -119,11 +121,12 @@ function setCanvasProperties(canvas, context) {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
 
+    context.fillStyle = "white";
+    context.fillRect(5, 5, (canvas.width - 10), (canvas.height - 10)); // off by 5 to preserve outline
+
     context.strokeStyle = document.body.style.getPropertyValue('--color');
     context.lineWidth = document.body.style.getPropertyValue('--width');
     context.lineCap = document.body.style.getPropertyValue('--nib');
-    context.fillStyle = "white";
-    context.fillRect(5, 5, canvas.width, canvas.height); // off by 5 to preserve outline
 }
 
 function setLabels(colorLabel, strokeLabel) {
@@ -131,28 +134,37 @@ function setLabels(colorLabel, strokeLabel) {
     strokeLabel.innerHTML = `Pen Width: ${ document.body.style.getPropertyValue('--width') }`;
 }
 
-function addEventHandlers(canvas, inputs, nibMenu, undoButton, saveButton, eraseAllButton) {
+function addEventHandlers(canvas, inputs, nibMenu, undoButton, downloadButton, eraseAllButton) {
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mousedown', () => {
         store();
-        enable(saveButton);
+        enable(downloadButton);
         enable(undo);
         document.body.style.setProperty('--isDrawing', true);
         document.body.style.setProperty('--lastX', event.offsetX);
         document.body.style.setProperty('--lastY', event.offsetY);
     });
     canvas.addEventListener('mouseup', () => {
+        globalPointPreserve.length = 0;
         document.body.style.setProperty('--isDrawing', false)
     });
     canvas.addEventListener('mouseout', () => {
+        globalPointPreserve.length = 0;
         document.body.style.setProperty('--isDrawing', false)
     });
 
     inputs.forEach(input => input.addEventListener('change', handleUpdate));
     nibMenu.addEventListener('change', handleUpdate);
     undoButton.addEventListener('click', restore);
-    saveButton.addEventListener('click', save);
-    eraseAllButton.addEventListener('click', eraseAll);
+    downloadButton.addEventListener('click', () => {
+        store();
+        downloadPic();
+    });
+    eraseAllButton.addEventListener('click', () => {
+        store();
+        eraseAll();
+        enable(undo);
+    });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -163,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const strokeLabel = document.querySelector('[for=width]');
     const nibMenu = document.querySelector('[name=nib]');
     const undoButton = document.getElementById('undo');
-    const saveButton = document.getElementById('save');
+    const downloadButton = document.getElementById('download');
     const eraseAllButton = document.getElementById('eraseAll');
 
     const colorInput = document.querySelector('[name=color]').value;
@@ -176,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setCSSVariables(colorInput, widthInput, nibInput);
     setCanvasProperties(canvas, context);
     setLabels(colorLabel, strokeLabel);
-    addEventHandlers(canvas, inputs, nibMenu, undoButton, saveButton, eraseAllButton);
+    addEventHandlers(canvas, inputs, nibMenu, undoButton, downloadButton, eraseAllButton);
 });
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

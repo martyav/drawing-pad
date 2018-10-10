@@ -14,7 +14,8 @@ body {
     margin: 0;
     padding: 0;
     border: 0;
-    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    font-family: 'Walter Turncoat', sans-serif;
+    text-transform: uppercase;
 }
 
 main {
@@ -62,6 +63,7 @@ button {
     box-shadow: 3px 3px black;
     background: #e3cf1c;
     color: black;
+    font-family: inherit;
     font-size: inherit;
 }
 
