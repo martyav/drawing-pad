@@ -1,5 +1,20 @@
 let globalPointPreserve = [];
 
+function loadJSON(callback) {   
+    // Credit: https://codepen.io/KryptoniteDove/post/load-json-file-locally-using-pure-javascript
+    let xobj = new XMLHttpRequest();
+    xobj.overrideMimeType("application/json");
+    xobj.open('GET', 'https://raw.githubusercontent.com/martyav/drawing-pad/master/src/prompts.json', true);
+    xobj.onreadystatechange = function () {
+        if (xobj.readyState == 4 && xobj.status == "200") {
+            // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
+            callback(xobj.responseText);
+        }
+    };
+
+    xobj.send(null);  
+ }
+
 function disable(button) {
     if (!button.hasAttribute('disabled')) {
         button.disabled = true;
@@ -59,13 +74,25 @@ function handleUpdate() {
     }
 }
 
+function prompt() {
+    const promptDisplay = document.querySelector('#promptDisplay');
+    const randomIndex = Math.floor(Math.random() * 150);
+
+    loadJSON(function(response) {
+        let topLevelJSON = JSON.parse(response);
+        let allPrompts = topLevelJSON.data.fun.concat(...topLevelJSON.data.serious);
+        let promptText = allPrompts[randomIndex];
+
+        promptDisplay.innerHTML = `${ promptText }`;
+    });
+}
+
 function restore(event) {
     console.table(localStorage);
 
     let savedDataUrl = localStorage.getItem('currentCanvas');
     let savedImg = new Image();
     savedImg.src = savedDataUrl;
-    console.log("Src = " + savedImg.src);
 
     const localCanvas = document.querySelector("#drawHere");
     const localContext = localCanvas.getContext("2d");
@@ -134,7 +161,7 @@ function setLabels(colorLabel, strokeLabel) {
     strokeLabel.innerHTML = `Pen Width: ${ document.body.style.getPropertyValue('--width') }`;
 }
 
-function addEventHandlers(canvas, inputs, nibMenu, undoButton, downloadButton, eraseAllButton) {
+function addEventHandlers(canvas, inputs, nibMenu, promptButton, undoButton, downloadButton, eraseAllButton) {
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mousedown', () => {
         store();
@@ -155,6 +182,7 @@ function addEventHandlers(canvas, inputs, nibMenu, undoButton, downloadButton, e
 
     inputs.forEach(input => input.addEventListener('change', handleUpdate));
     nibMenu.addEventListener('change', handleUpdate);
+    promptButton.addEventListener('click', prompt);
     undoButton.addEventListener('click', restore);
     downloadButton.addEventListener('click', () => {
         store();
@@ -174,6 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const colorLabel = document.querySelector('[for=color]');
     const strokeLabel = document.querySelector('[for=width]');
     const nibMenu = document.querySelector('[name=nib]');
+    const promptButton = document.querySelector('#prompt');
     const undoButton = document.getElementById('undo');
     const downloadButton = document.getElementById('download');
     const eraseAllButton = document.getElementById('eraseAll');
@@ -188,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setCSSVariables(colorInput, widthInput, nibInput);
     setCanvasProperties(canvas, context);
     setLabels(colorLabel, strokeLabel);
-    addEventHandlers(canvas, inputs, nibMenu, undoButton, downloadButton, eraseAllButton);
+    addEventHandlers(canvas, inputs, nibMenu, promptButton, undoButton, downloadButton, eraseAllButton);
 });
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

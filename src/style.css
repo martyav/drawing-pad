@@ -14,7 +14,7 @@ body {
     margin: 0;
     padding: 0;
     border: 0;
-    font-family: 'Walter Turncoat', sans-serif;
+    font-family: 'Work Sans', 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
     text-transform: uppercase;
 }
 
@@ -45,7 +45,7 @@ li {
 }
 
 .containsButton {
-    margin-bottom: 20px !important;
+    margin-bottom: 20px !important; /* An inelegant solution to there being no parent selector */
 }
 
 input {
@@ -68,7 +68,8 @@ button {
     background: #e3cf1c;
     color: black;
     font-family: inherit;
-    font-size: inherit;
+    font-size: 0.9em;
+    text-transform: inherit;
 }
 
 button:active, input[type=color]:active {
@@ -89,10 +90,11 @@ select {
     border: 1px solid black;
 }
 
-#drawMe {
+#promptDisplay {
     width: 100%;
-    height: auto;
-    content: "See me";
+    height: 3em;
+    font-size: 1.2em;
+    font-family: 'Walter Turncoat', sans-serif;
 }
 
 #drawHere {
