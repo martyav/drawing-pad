@@ -1,3 +1,5 @@
+let globalPointPreserve = [];
+
 function disable(button) {
     if (!button.hasAttribute('disabled')) {
         button.disabled = true;
@@ -22,9 +24,11 @@ function draw(event) {
     const localLastX = document.body.style.getPropertyValue('--lastX');
     const localLastY = document.body.style.getPropertyValue('--lastY');
 
+    globalPointPreserve.push({x: localLastX, y: localLastY});
+
     localContext.beginPath();
-    localContext.moveTo(localLastX, localLastY);
-    localContext.lineTo(event.offsetX, event.offsetY);
+    localContext.moveTo(globalPointPreserve[0].x, globalPointPreserve[0].y);
+    globalPointPreserve.forEach(point => localContext.lineTo(point.x, point.y));
     localContext.stroke();
     document.body.style.setProperty('--lastX', event.offsetX);
     document.body.style.setProperty('--lastY', event.offsetY);
@@ -87,8 +91,6 @@ function store() {
 }
 
 function downloadPic(event) {
-    store();
-
     let savedDataUrl = localStorage.getItem('currentCanvas');
 
     download(savedDataUrl, "drawing-from-drawing-pad.png", "image/png");
@@ -96,7 +98,7 @@ function downloadPic(event) {
     disable(event.target);
 }
 
-function eraseAll() {
+function eraseAll() {    
     const localCanvas = document.querySelector("#drawHere");
     const localContext = localCanvas.getContext("2d");
 
@@ -143,17 +145,26 @@ function addEventHandlers(canvas, inputs, nibMenu, undoButton, downloadButton, e
         document.body.style.setProperty('--lastY', event.offsetY);
     });
     canvas.addEventListener('mouseup', () => {
+        globalPointPreserve.length = 0;
         document.body.style.setProperty('--isDrawing', false)
     });
     canvas.addEventListener('mouseout', () => {
+        globalPointPreserve.length = 0;
         document.body.style.setProperty('--isDrawing', false)
     });
 
     inputs.forEach(input => input.addEventListener('change', handleUpdate));
     nibMenu.addEventListener('change', handleUpdate);
     undoButton.addEventListener('click', restore);
-    downloadButton.addEventListener('click', downloadPic);
-    eraseAllButton.addEventListener('click', eraseAll);
+    downloadButton.addEventListener('click', () => {
+        store();
+        downloadPic();
+    });
+    eraseAllButton.addEventListener('click', () => {
+        store();
+        eraseAll();
+        enable(undo);
+    });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
