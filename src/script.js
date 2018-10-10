@@ -76,12 +76,16 @@ function handleUpdate() {
 
 function prompt() {
     const promptDisplay = document.querySelector('#promptDisplay');
-    const randomIndex = Math.floor(Math.random() * 150);
+    const selected = document.body.style.getPropertyValue('--promptList');
+    const randomIndex = selected === 'all' ? Math.floor(Math.random() * 150) : Math.floor(Math.random() * 75);
 
     loadJSON(function(response) {
         let topLevelJSON = JSON.parse(response);
-        let allPrompts = topLevelJSON.data.fun.concat(...topLevelJSON.data.serious);
-        let promptText = allPrompts[randomIndex];
+        console.log()
+        let fun = topLevelJSON.data.fun;
+        let serious = topLevelJSON.data.serious;
+        let allPrompts = fun.concat(...serious);
+        let promptText = selected === 'fun' ? fun[randomIndex] : selected === 'serious' ? serious[randomIndex] : allPrompts[randomIndex];
 
         promptDisplay.innerHTML = `${ promptText }.`;
     });
@@ -134,13 +138,14 @@ function eraseAll() {
     localContext.fillRect(5, 5, (localCanvas.width - 10), (localCanvas.height - 10)); // off by 5 to preserve outline
 }
 
-function setCSSVariables(colorInput, widthInput, nibInput) {
+function setCSSVariables(colorInput, widthInput, nibInput, promptList) {
     document.body.style.setProperty("--color", `${ colorInput }`);
     document.body.style.setProperty('--width', `${ widthInput }`);
     document.body.style.setProperty('--nib', `${ nibInput }`);
     document.body.style.setProperty('--isDrawing', false); // Note: this method converts the second arg to a string
     document.body.style.setProperty('--lastX', 0);
     document.body.style.setProperty('--lastY', 0);
+    document.body.style.setProperty('--promptList', `${ promptList }`);
 }
 
 function setCanvasProperties(canvas, context) {
@@ -161,7 +166,7 @@ function setLabels(colorLabel, strokeLabel) {
     strokeLabel.innerHTML = `Pen Width: ${ document.body.style.getPropertyValue('--width') }`;
 }
 
-function addEventHandlers(canvas, inputs, nibMenu, promptButton, undoButton, downloadButton, eraseAllButton) {
+function addEventHandlers(canvas, inputs, nibMenu, radioButtons, promptButton, undoButton, downloadButton, eraseAllButton) {
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mousedown', () => {
         store();
@@ -182,6 +187,7 @@ function addEventHandlers(canvas, inputs, nibMenu, promptButton, undoButton, dow
 
     inputs.forEach(input => input.addEventListener('change', handleUpdate));
     nibMenu.addEventListener('change', handleUpdate);
+    radioButtons.forEach(radio => radio.addEventListener('change', handleUpdate));
     promptButton.addEventListener('click', prompt);
     undoButton.addEventListener('click', restore);
     downloadButton.addEventListener('click', () => {
@@ -202,6 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const colorLabel = document.querySelector('[for=color]');
     const strokeLabel = document.querySelector('[for=width]');
     const nibMenu = document.querySelector('[name=nib]');
+    const radioButtons = document.querySelectorAll('input[type="radio"]');
     const promptButton = document.querySelector('#prompt');
     const undoButton = document.getElementById('undo');
     const downloadButton = document.getElementById('download');
@@ -210,14 +217,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const colorInput = document.querySelector('[name=color]').value;
     const widthInput = document.querySelector('[name=width]').value;
     const nibInput = nibMenu.value;
+    const promptList = document.querySelector('input[name="promptList"]:checked').value;
 
     localStorage.clear();
     store();
 
-    setCSSVariables(colorInput, widthInput, nibInput);
+    setCSSVariables(colorInput, widthInput, nibInput, promptList);
     setCanvasProperties(canvas, context);
     setLabels(colorLabel, strokeLabel);
-    addEventHandlers(canvas, inputs, nibMenu, promptButton, undoButton, downloadButton, eraseAllButton);
+    addEventHandlers(canvas, inputs, nibMenu, radioButtons, promptButton, undoButton, downloadButton, eraseAllButton);
 });
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

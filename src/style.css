@@ -6,6 +6,7 @@
     --isDrawing: 'undefined';
     --lastX: 'undefined';
     --lastY: 'undefined';
+    --promptList: 'undefined';
 }
 
 body {
