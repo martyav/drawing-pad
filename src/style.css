@@ -6,6 +6,7 @@
     --isDrawing: 'undefined';
     --lastX: 'undefined';
     --lastY: 'undefined';
+    --promptList: 'undefined';
 }
 
 body {
@@ -14,7 +15,7 @@ body {
     margin: 0;
     padding: 0;
     border: 0;
-    font-family: 'Walter Turncoat', sans-serif;
+    font-family: 'Work Sans', 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
     text-transform: uppercase;
 }
 
@@ -29,19 +30,21 @@ main {
     height: 100vh;
 }
 
-label {
-    display: block;
-    margin-bottom: 4px;
-    margin-top: 4px;
-}
-
 ul {
     list-style: none;
-    padding-left: 8px;
+    padding: 16px;
+    margin: 5px;
+    margin-top: 0;
+    border: 5px solid black;
 }
 
 li {
+    margin-left: 0; 
     margin-bottom: 40px;
+}
+
+.containsButton {
+    margin-bottom: 20px !important; /* An inelegant solution to there being no parent selector */
 }
 
 input {
@@ -50,7 +53,25 @@ input {
     background: white;
 }
 
+input[type = 'radio'] {
+    display: inline;
+    box-shadow: none;
+    border: none;
+}
+
+label {
+    display: block;
+    margin-bottom: 4px;
+    margin-top: 4px;
+}
+
+.radioContainer {
+    display: flex;
+    align-items: center;
+}
+
 select {
+    border: 1px solid black;
     box-shadow: 3px 3px black;
     font-size: inherit;
 }
@@ -64,7 +85,8 @@ button {
     background: #e3cf1c;
     color: black;
     font-family: inherit;
-    font-size: inherit;
+    font-size: 0.9em;
+    text-transform: inherit;
 }
 
 button:active, input[type=color]:active {
@@ -80,9 +102,26 @@ button:disabled {
     cursor: not-allowed;
 }
 
-select {
-    margin-bottom: 100px;
-    border: 1px solid black;
+#promptDisplay {
+    display: flex;
+    height: 5em;
+    padding: 16px;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid black;
+    border-radius: 50%;
+    font-family: 'Walter Turncoat', sans-serif;
+    font-weight: bold;
+    text-overflow: ellipsis;
+}
+
+li:last-child {
+    margin-bottom: 0px;
+}
+
+button:last-child {
+    margin-bottom: 3px;
 }
 
 #drawHere {
