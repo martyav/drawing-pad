@@ -77,11 +77,10 @@ function handleUpdate() {
 function prompt() {
     const promptDisplay = document.querySelector('#promptDisplay');
     const selected = document.body.style.getPropertyValue('--promptList');
-    const randomIndex = selected === 'all' ? Math.floor(Math.random() * 150) : Math.floor(Math.random() * 75);
+    const randomIndex = selected === 'all' ? Math.floor(Math.random() * 200) : Math.floor(Math.random() * 100);
 
     loadJSON(function(response) {
         let topLevelJSON = JSON.parse(response);
-        console.log()
         let fun = topLevelJSON.data.fun;
         let serious = topLevelJSON.data.serious;
         let allPrompts = fun.concat(...serious);
