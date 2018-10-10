@@ -44,6 +44,10 @@ li {
     margin-bottom: 40px;
 }
 
+.containsButton {
+    margin-bottom: 20px !important;
+}
+
 input {
     box-shadow: 3px 3px black;
     border: 1px solid black;
@@ -83,6 +87,12 @@ button:disabled {
 select {
     margin-bottom: 100px;
     border: 1px solid black;
+}
+
+#drawMe {
+    width: 100%;
+    height: auto;
+    content: "See me";
 }
 
 #drawHere {
