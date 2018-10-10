@@ -119,11 +119,12 @@ function setCanvasProperties(canvas, context) {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
 
+    context.fillStyle = "white";
+    context.fillRect(5, 5, (canvas.width - 10), (canvas.height - 10)); // off by 5 to preserve outline
+
     context.strokeStyle = document.body.style.getPropertyValue('--color');
     context.lineWidth = document.body.style.getPropertyValue('--width');
     context.lineCap = document.body.style.getPropertyValue('--nib');
-    context.fillStyle = "white";
-    context.fillRect(5, 5, (canvas.width - 10), (canvas.height - 10)); // off by 5 to preserve outline
 }
 
 function setLabels(colorLabel, strokeLabel) {

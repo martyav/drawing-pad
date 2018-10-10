@@ -15,6 +15,7 @@ body {
     padding: 0;
     border: 0;
     font-family: 'Walter Turncoat', sans-serif;
+    text-transform: uppercase;
 }
 
 main {
