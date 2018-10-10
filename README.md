@@ -17,6 +17,6 @@ Check out the drawing pad at [https://martyav.github.io/drawing-pad/](https://ma
  * Keyboard short cuts?
  * Brushes?
  * Gamify
-     * Add drawing prompts - in progress (JSON added to dev branch)
-     * Add checkboxes for category: Fun/Serious
+     * ~~Add drawing prompts~~
+     * ~~Add checkboxes for category: Fun/Serious~~
      * Add optional timer
