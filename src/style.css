@@ -29,18 +29,16 @@ main {
     height: 100vh;
 }
 
-label {
-    display: block;
-    margin-bottom: 4px;
-    margin-top: 4px;
-}
-
 ul {
     list-style: none;
-    padding-left: 8px;
+    padding: 16px;
+    margin: 5px;
+    margin-top: 0;
+    border: 5px solid black;
 }
 
 li {
+    margin-left: 0; 
     margin-bottom: 40px;
 }
 
@@ -54,7 +52,25 @@ input {
     background: white;
 }
 
+input[type = 'radio'] {
+    display: inline;
+    box-shadow: none;
+    border: none;
+}
+
+label {
+    display: block;
+    margin-bottom: 4px;
+    margin-top: 4px;
+}
+
+.radioContainer {
+    display: flex;
+    align-items: center;
+}
+
 select {
+    border: 1px solid black;
     box-shadow: 3px 3px black;
     font-size: inherit;
 }
@@ -85,16 +101,26 @@ button:disabled {
     cursor: not-allowed;
 }
 
-select {
-    margin-bottom: 100px;
-    border: 1px solid black;
+#promptDisplay {
+    display: flex;
+    height: 5em;
+    padding: 16px;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid black;
+    border-radius: 50%;
+    font-family: 'Walter Turncoat', sans-serif;
+    font-weight: bold;
+    text-overflow: ellipsis;
 }
 
-#promptDisplay {
-    width: 100%;
-    height: 3em;
-    font-size: 1.2em;
-    font-family: 'Walter Turncoat', sans-serif;
+li:last-child {
+    margin-bottom: 0px;
+}
+
+button:last-child {
+    margin-bottom: 3px;
 }
 
 #drawHere {

@@ -83,7 +83,7 @@ function prompt() {
         let allPrompts = topLevelJSON.data.fun.concat(...topLevelJSON.data.serious);
         let promptText = allPrompts[randomIndex];
 
-        promptDisplay.innerHTML = `${ promptText }`;
+        promptDisplay.innerHTML = `${ promptText }.`;
     });
 }
 

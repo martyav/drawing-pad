@@ -13,8 +13,8 @@
 
 <body>
     <main>
-        <div id='controls'>
-            <ul>
+        <div id = 'controls'>
+            <ul id = 'tool'>
                 <li>
                     <input type='color' name='color' value='#000000'>
                     <label for='color'></label>
@@ -29,12 +29,37 @@
                         <option value='square'>square</option>
                     </select>
                 </li>
+            </ul>
+
+            <ul id = 'artPrompt'>
                 <li>
-                    <div id = 'promptDisplay'>Draw this</div>
+                    <div id = 'promptDisplay'>Draw this.</div>
                 </li>
                 <li class = 'containsButton'>
                     <button id = 'prompt'>new prompt</button>
                 </li>
+                <li>
+                    <div class = 'radioContainer'>
+                        <input type = 'radio' id = "all" 
+                    name = "promptList" value = "all" checked/>
+                        <label for = 'all'>All prompts</label>
+                    </div>
+                    
+                    <div class = 'radioContainer'>
+                        <input type = 'radio' id = "fun" 
+                    name = "promptList" value = "fun"/>
+                        <label for = 'fun'>Fun</label>
+                    </div>
+
+                    <div class = 'radioContainer'>
+                        <input type = 'radio' id = "serious" 
+                    name = "promptList" value = "serious"/>
+                        <label for = 'serious'>Serious</label>
+                    </div>
+                </li>
+            </ul>
+
+            <ul id = 'state'>
                 <li class = 'containsButton'>
                     <button id = 'undo' disabled>undo</button>
                 </li>
@@ -42,7 +67,7 @@
                     <button id = 'download' type = 'submit' disabled>download</button>
                 </li>
                 <li class = 'containsButton'>
-                    <button id = 'eraseAll'>⚠️ erase everything ⚠️</button>
+                    <button id = 'eraseAll'>⚠️ erase all ⚠️</button>
                 </li>
             </ul>
         </div>
