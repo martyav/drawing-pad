@@ -1,4 +1,5 @@
 let globalPointPreserve = [];
+let interval;
 
 function loadJSON(callback) {   
     // Credit: https://codepen.io/KryptoniteDove/post/load-json-file-locally-using-pure-javascript
@@ -90,26 +91,6 @@ function prompt() {
     });
 }
 
-function startTimer(timeInMilliSeconds) {
-    let time = timeInMilliSeconds; //180000 == 3 minutes
-    let throttle = 100;
-    const minutesDiv = document.querySelector('.minutes');
-    const secondsDiv = document.querySelector('.seconds');
-    const millisecondsDiv = document.querySelector('.milliseconds');
-
-    const interval = setInterval(() => {
-        if (time <= 0) clearInterval(interval);
-        let minutes = Math.floor((time/60000) % 60);
-        let seconds = Math.floor((time/1000) % 60);
-        let milliseconds = Math.floor((time % 1000)/10);
-        console.log(milliseconds);
-        minutesDiv.innerHTML = minutes < 10 ? `0${Math.floor(minutes)}` : Math.floor(minutes);
-        secondsDiv.innerHTML = seconds < 10 ? `0${Math.floor(seconds)}` : Math.floor(seconds);
-        millisecondsDiv.innerHTML = milliseconds < 10 ? `0${Math.floor((milliseconds))}` : Math.floor(milliseconds);
-        time -= throttle;
-    }, throttle);
-}
-
 function restore(event) {
     console.table(localStorage);
 
@@ -157,6 +138,73 @@ function eraseAll() {
     localContext.fillRect(5, 5, (localCanvas.width - 10), (localCanvas.height - 10)); // off by 5 to preserve outline
 }
 
+function hideTimer() {
+    const timer = document.querySelector('#timer');
+
+    let reveal;
+
+    if (!document.querySelector('.reveal')) {
+        reveal = document.createElement('button');
+        reveal.classList.add('reveal');
+        reveal.innerHTML = 'Reveal';
+
+        document.body.appendChild(reveal);
+        reveal.addEventListener('click', revealTimer);
+    } else {
+        reveal = document.querySelector('.reveal');
+    }
+
+    timer.style.transform = `translate(0, -${timer.offsetHeight}px)`;
+    reveal.style.transform = `translate(0, -${timer.offsetHeight - 10}px)`;
+}
+
+function revealTimer() {
+    const timer = document.querySelector('#timer');
+    const reveal = document.querySelector('.reveal');
+
+    timer.style.transform = `translate(0, 0)`;
+    reveal.style.transform = `translate(0, 10px)`;
+}
+
+function updateCountDown() {
+    let time = parseInt(document.body.style.getPropertyValue('--time')); 
+    const throttle = 1000;
+    const minutesDiv = document.querySelector('.minutes');
+    const secondsDiv = document.querySelector('.seconds');
+
+    if (time <= 0) clearInterval(interval);
+
+    let minutes = Math.floor((time/60000) % 60);
+    let seconds = Math.floor((time/1000) % 60);
+    
+    minutesDiv.innerHTML = minutes < 10 ? `0${Math.floor(minutes)}` : Math.floor(minutes);
+    secondsDiv.innerHTML = seconds < 10 ? `0${Math.floor(seconds)}` : Math.floor(seconds);
+    document.body.style.setProperty('--time', time);
+    
+    time -= throttle;
+    document.body.style.setProperty('--time', time);
+}
+
+function startTimer() {
+    interval = setInterval(updateCountDown, 1000);
+}
+
+function stopStart() {
+    const isCounting = JSON.parse(document.body.style.getPropertyValue('--isCounting'));
+    
+    if (!isCounting) {
+        if (parseInt(document.body.style.getPropertyValue('--time')) === 0) {
+            document.body.style.setProperty('--time', 180000);
+        }
+        
+        document.body.style.setProperty('--isCounting', true);
+        startTimer();
+    } else {
+        document.body.style.setProperty('--isCounting', false);
+        clearInterval(interval);
+    } 
+}
+
 function setCSSVariables(colorInput, widthInput, nibInput, promptList) {
     document.body.style.setProperty("--color", `${ colorInput }`);
     document.body.style.setProperty('--width', `${ widthInput }`);
@@ -165,6 +213,8 @@ function setCSSVariables(colorInput, widthInput, nibInput, promptList) {
     document.body.style.setProperty('--lastX', 0);
     document.body.style.setProperty('--lastY', 0);
     document.body.style.setProperty('--promptList', `${ promptList }`);
+    document.body.style.setProperty('--isCounting', false);
+    document.body.style.setProperty('--time', 0);
 }
 
 function setCanvasProperties(canvas, context) {
@@ -185,7 +235,7 @@ function setLabels(colorLabel, strokeLabel) {
     strokeLabel.innerHTML = `Pen Width: ${ document.body.style.getPropertyValue('--width') }`;
 }
 
-function addEventHandlers(canvas, inputs, nibMenu, radioButtons, promptButton, undoButton, downloadButton, eraseAllButton) {
+function addEventHandlers(canvas, inputs, nibMenu, radioButtons, promptButton, undoButton, downloadButton, eraseAllButton, hideButton, stopStartButton) {
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mousedown', () => {
         store();
@@ -218,6 +268,9 @@ function addEventHandlers(canvas, inputs, nibMenu, radioButtons, promptButton, u
         eraseAll();
         enable(undo);
     });
+
+    hideButton.addEventListener('click', hideTimer);
+    stopStartButton.addEventListener('click', stopStart);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -238,15 +291,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const nibInput = nibMenu.value;
     const promptList = document.querySelector('input[name="promptList"]:checked').value;
 
+    const hideButton = document.querySelector('.hide');
+    const stopStartButton = document.querySelector('.stopStart');
+
     localStorage.clear();
     store();
 
     setCSSVariables(colorInput, widthInput, nibInput, promptList);
     setCanvasProperties(canvas, context);
     setLabels(colorLabel, strokeLabel);
-    addEventHandlers(canvas, inputs, nibMenu, radioButtons, promptButton, undoButton, downloadButton, eraseAllButton);
-
-    startTimer(3000);
+    addEventHandlers(canvas, inputs, nibMenu, radioButtons, promptButton, undoButton, downloadButton, eraseAllButton, hideButton, stopStartButton);
 });
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

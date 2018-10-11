@@ -140,25 +140,34 @@ button:last-child {
     justify-content: space-evenly;
     top: 0;
     right: 0;
-    height: auto;
+    height: 50px;
     width: auto;
     border: 5px solid black;
-    background: pink;
+    background: black;
     font-weight: bold;
+    transition: transform 1s;
 }
 
-#timer > button {
-    background: inherit;
+.reveal, #timer > button {
     box-shadow: none;
     align-content: stretch;
     margin-bottom: 0;
+    height: inherit;
     outline: 5px solid black;
+}
+
+.reveal + button:active, #timer > button:active {
+    transform: scale(0.9);
 }
 
 .countdown {
     display: flex;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Share Tech Mono', 'Courier New', Courier, monospace;
     font-weight: bold;
+    background: rgb(43, 2, 2);
+    color: red;
+    border: 1px solid rgb(70, 2, 2);
+    padding: 4px;
 }
 
 .hide {
@@ -169,7 +178,9 @@ button:last-child {
     margin: 0 0 0 16px;
 }
 
-#timer > button:active, input[type=color]:active {
-    background:  rgba(0,0,0, 0.15);
-    transform: none;
+.reveal {
+    position: absolute; 
+    top: 50px;
+    right: 0;
+    transition: all 1s;
 }
