@@ -172,7 +172,10 @@ function updateCountDown() {
     const minutesDiv = document.querySelector('.minutes');
     const secondsDiv = document.querySelector('.seconds');
 
-    if (time <= 0) clearInterval(interval);
+    if (time <= 0) {
+        clearInterval(interval);
+        document.body.style.setProperty('--isCounting', false);
+    }
 
     let minutes = Math.floor((time/60000) % 60);
     let seconds = Math.floor((time/1000) % 60);
@@ -193,7 +196,7 @@ function stopStart() {
     const isCounting = JSON.parse(document.body.style.getPropertyValue('--isCounting'));
     
     if (!isCounting) {
-        if (parseInt(document.body.style.getPropertyValue('--time')) === 0) {
+        if (parseInt(document.body.style.getPropertyValue('--time')) <= 0) {
             document.body.style.setProperty('--time', 180000);
         }
         
