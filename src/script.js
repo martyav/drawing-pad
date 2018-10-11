@@ -90,6 +90,26 @@ function prompt() {
     });
 }
 
+function startTimer(timeInMilliSeconds) {
+    let time = timeInMilliSeconds; //180000 == 3 minutes
+    let throttle = 100;
+    const minutesDiv = document.querySelector('.minutes');
+    const secondsDiv = document.querySelector('.seconds');
+    const millisecondsDiv = document.querySelector('.milliseconds');
+
+    const interval = setInterval(() => {
+        if (time <= 0) clearInterval(interval);
+        let minutes = Math.floor((time/60000) % 60);
+        let seconds = Math.floor((time/1000) % 60);
+        let milliseconds = Math.floor((time % 1000)/10);
+        console.log(milliseconds);
+        minutesDiv.innerHTML = minutes < 10 ? `0${Math.floor(minutes)}` : Math.floor(minutes);
+        secondsDiv.innerHTML = seconds < 10 ? `0${Math.floor(seconds)}` : Math.floor(seconds);
+        millisecondsDiv.innerHTML = milliseconds < 10 ? `0${Math.floor((milliseconds))}` : Math.floor(milliseconds);
+        time -= throttle;
+    }, throttle);
+}
+
 function restore(event) {
     console.table(localStorage);
 
@@ -225,6 +245,8 @@ document.addEventListener("DOMContentLoaded", () => {
     setCanvasProperties(canvas, context);
     setLabels(colorLabel, strokeLabel);
     addEventHandlers(canvas, inputs, nibMenu, radioButtons, promptButton, undoButton, downloadButton, eraseAllButton);
+
+    startTimer(3000);
 });
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

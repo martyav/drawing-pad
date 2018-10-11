@@ -131,3 +131,45 @@ button:last-child {
     outline-offset: -5px;
     /* outline is a property similar to border, but it is not counted as part of the element's dimensions. By default it is always outside the border area, but we can use outline-offset to position it more precisely in respect to its element. Setting it to be the inverse of its own width ensures it is contained within the div and prevents ugly scrollbars from being added to the page, as was the case when we were using border to create the same effect of an outlined panel */
 }
+
+#timer {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-items: center;
+    justify-content: space-evenly;
+    top: 0;
+    right: 0;
+    height: auto;
+    width: auto;
+    border: 5px solid black;
+    background: pink;
+    font-weight: bold;
+}
+
+#timer > button {
+    background: inherit;
+    box-shadow: none;
+    align-content: stretch;
+    margin-bottom: 0;
+    outline: 5px solid black;
+}
+
+.countdown {
+    display: flex;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+}
+
+.hide {
+    margin: 0 16px 0 0;
+}
+
+.stopStart {
+    margin: 0 0 0 16px;
+}
+
+#timer > button:active, input[type=color]:active {
+    background:  rgba(0,0,0, 0.15);
+    transform: none;
+}
