@@ -152,6 +152,7 @@ function hideTimer() {
         reveal.addEventListener('click', revealTimer);
     } else {
         reveal = document.querySelector('.reveal');
+        reveal.style.opacity = '1.0';
     }
 
     timer.style.transform = `translate(0, -${timer.offsetHeight}px)`;
@@ -163,7 +164,8 @@ function revealTimer() {
     const reveal = document.querySelector('.reveal');
 
     timer.style.transform = `translate(0, 0)`;
-    reveal.style.transform = `translate(0, 10px)`;
+    reveal.style.transform = `translate(0, -200px)`;
+    reveal.style.opacity = '0.0';
 }
 
 function updateCountDown() {
