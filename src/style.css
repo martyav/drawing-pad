@@ -7,6 +7,8 @@
     --lastX: 'undefined';
     --lastY: 'undefined';
     --promptList: 'undefined';
+    --isCounting: 'undefined';
+    --time: 'undefined';
 }
 
 body {
@@ -130,4 +132,57 @@ button:last-child {
     outline: 5px solid black;
     outline-offset: -5px;
     /* outline is a property similar to border, but it is not counted as part of the element's dimensions. By default it is always outside the border area, but we can use outline-offset to position it more precisely in respect to its element. Setting it to be the inverse of its own width ensures it is contained within the div and prevents ugly scrollbars from being added to the page, as was the case when we were using border to create the same effect of an outlined panel */
+}
+
+#timer {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-items: center;
+    justify-content: space-evenly;
+    top: 0;
+    right: 0;
+    height: 50px;
+    width: auto;
+    border: 5px solid black;
+    background: black;
+    font-weight: bold;
+    transition: transform 1s;
+}
+
+.reveal, #timer > button {
+    box-shadow: none;
+    align-content: stretch;
+    margin-bottom: 0;
+    height: inherit;
+    outline: 5px solid black;
+}
+
+.reveal + button:active, #timer > button:active {
+    transform: scale(0.9);
+}
+
+.countdown {
+    display: flex;
+    font-family: 'Share Tech Mono', 'Courier New', Courier, monospace;
+    font-weight: bold;
+    background: rgb(43, 2, 2);
+    color: rgb(125, 100, 100);
+    border: 1px solid rgb(70, 2, 2);
+    padding: 4px;
+}
+
+.hide {
+    margin: 0 16px 0 0;
+}
+
+.stopStart {
+    margin: 0 0 0 16px;
+}
+
+.reveal {
+    position: absolute; 
+    top: 50px;
+    right: 0;
+    transition: all 1s;
 }
