@@ -210,6 +210,12 @@ function stopStart() {
     } 
 }
 
+function lightUpCountdown() {
+    const countdown = document.querySelector('.countdown');
+
+    countdown.style.color = 'red';
+}
+
 function setCSSVariables(colorInput, widthInput, nibInput, promptList) {
     document.body.style.setProperty("--color", `${ colorInput }`);
     document.body.style.setProperty('--width', `${ widthInput }`);
@@ -262,7 +268,19 @@ function addEventHandlers(canvas, inputs, nibMenu, radioButtons, promptButton, u
     inputs.forEach(input => input.addEventListener('change', handleUpdate));
     nibMenu.addEventListener('change', handleUpdate);
     radioButtons.forEach(radio => radio.addEventListener('change', handleUpdate));
-    promptButton.addEventListener('click', prompt);
+    promptButton.addEventListener('click', () => {
+        prompt();
+
+        if (JSON.parse(document.body.style.getPropertyValue('--isCounting'))) {
+            clearInterval(interval);
+        }
+
+        document.body.style.setProperty('--time', 180000);
+        document.body.style.setProperty('--isCounting', true);
+        
+        startTimer();
+        lightUpCountdown();
+    });
     undoButton.addEventListener('click', restore);
     downloadButton.addEventListener('click', () => {
         store();
