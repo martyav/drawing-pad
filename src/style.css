@@ -172,6 +172,18 @@ button:last-child {
     padding: 4px;
 }
 
+.lightUp {
+    color: red;
+    border: rgb(90, 2, 2);
+    animation-name: flash;
+    animation-duration: 500ms;
+    transition: 500ms;
+}
+
+@keyframes flash {
+    50% { background: red; }
+}
+
 .hide {
     margin: 0 16px 0 0;
 }
