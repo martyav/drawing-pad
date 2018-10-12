@@ -1,4 +1,5 @@
 let globalPointPreserve = [];
+const timeLimit = 60000;
 let interval;
 
 function loadJSON(callback) {   
@@ -184,9 +185,9 @@ function updateCountDown() {
     
     minutesDiv.innerHTML = minutes < 10 ? `0${Math.floor(minutes)}` : Math.floor(minutes);
     secondsDiv.innerHTML = seconds < 10 ? `0${Math.floor(seconds)}` : Math.floor(seconds);
-    document.body.style.setProperty('--time', time);
     
     time -= throttle;
+
     document.body.style.setProperty('--time', time);
 }
 
@@ -199,21 +200,29 @@ function stopStart() {
     
     if (!isCounting) {
         if (parseInt(document.body.style.getPropertyValue('--time')) <= 0) {
-            document.body.style.setProperty('--time', 180000);
+            document.body.style.setProperty('--time', timeLimit);
         }
         
         document.body.style.setProperty('--isCounting', true);
         startTimer();
+        lightUpCountdown();
     } else {
         document.body.style.setProperty('--isCounting', false);
         clearInterval(interval);
+        lightDownCountdown();
     } 
 }
 
 function lightUpCountdown() {
     const countdown = document.querySelector('.countdown');
 
-    countdown.style.color = 'red';
+    countdown.classList.add('lightUp');
+}
+
+function lightDownCountdown() {
+    const countdown = document.querySelector('.countdown');
+
+    countdown.classList.remove('lightUp');
 }
 
 function setCSSVariables(colorInput, widthInput, nibInput, promptList) {
@@ -275,7 +284,7 @@ function addEventHandlers(canvas, inputs, nibMenu, radioButtons, promptButton, u
             clearInterval(interval);
         }
 
-        document.body.style.setProperty('--time', 180000);
+        document.body.style.setProperty('--time', timeLimit);
         document.body.style.setProperty('--isCounting', true);
         
         startTimer();
