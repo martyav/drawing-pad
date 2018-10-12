@@ -113,9 +113,22 @@ button:disabled {
     justify-content: center;
     border: 3px solid black;
     border-radius: 50%;
+    background: white;
     font-family: 'Walter Turncoat', sans-serif;
     font-weight: bold;
     text-overflow: ellipsis;
+}
+
+#artPrompt {
+    background: rgb(255, 160, 160);
+}
+
+#tool {
+    background: rgb(138, 255, 255);
+}
+
+#state {
+    background: rgb(255, 255, 138);
 }
 
 li:last-child {
@@ -131,7 +144,7 @@ button:last-child {
     height: 100vh;
     outline: 5px solid black;
     outline-offset: -5px;
-    /* outline is a property similar to border, but it is not counted as part of the element's dimensions. By default it is always outside the border area, but we can use outline-offset to position it more precisely in respect to its element. Setting it to be the inverse of its own width ensures it is contained within the div and prevents ugly scrollbars from being added to the page, as was the case when we were using border to create the same effect of an outlined panel */
+    /* outline is a property similar to border, but it is not counted as part of the element's dimensions. By default it is always outside the border area, but we can use outline-offset to position it more precisely in respect to its element. Setting it to be the inverse of its own width ensures it is contained within the div and prevents ugly scrollbars from being added to the page, as was the case when we were using border to create the same effect */
 }
 
 #timer {
@@ -141,7 +154,7 @@ button:last-child {
     justify-items: center;
     justify-content: space-evenly;
     top: 0;
-    right: 0;
+    left: 18vw;
     height: 50px;
     width: auto;
     border: 5px solid black;
@@ -155,10 +168,10 @@ button:last-child {
     align-content: stretch;
     margin-bottom: 0;
     height: inherit;
-    outline: 5px solid black;
+    outline: 3px solid black;
 }
 
-.reveal + button:active, #timer > button:active {
+.reveal button:active, #timer > button:active {
     transform: scale(0.9);
 }
 
@@ -169,32 +182,36 @@ button:last-child {
     background: rgb(43, 2, 2);
     color: rgb(125, 100, 100);
     border: 1px solid rgb(70, 2, 2);
+    margin-left: 16px;
+    margin-right: 16px; 
     padding: 4px;
 }
 
 .lightUp {
     color: red;
-    border: rgb(90, 2, 2);
+    border: rgb(90, 2, 2); /* dark red */
     animation-name: flash;
     animation-duration: 500ms;
     transition: 500ms;
 }
 
 @keyframes flash {
+    0% { background: rgb(125, 100, 100); } /* light pinkish red */
     50% { background: red; }
 }
 
 .hide {
-    margin: 0 16px 0 0;
+    margin: 0;
 }
 
 .stopStart {
-    margin: 0 0 0 16px;
+    margin: 0;
 }
 
 .reveal {
     position: absolute; 
     top: 50px;
-    right: 0;
+    left: 18vw;
+    margin-left: 3px;
     transition: all 1s;
 }
