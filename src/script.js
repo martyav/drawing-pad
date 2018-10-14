@@ -111,9 +111,8 @@ class Controller {
         this.appState.imageAsData = this.appElements.canvas.toDataURL('image/png')
     }
 
-    downloadPic(event) {
+    downloadPic() {
         download(this.appState.imageAsData, "drawing-from-drawing-pad.png", "image/png");
-        event.target.disable();
     }
 
     eraseAll() {
@@ -246,6 +245,7 @@ class Controller {
         this.appElements.downloadButton.addEventListener('click', () => {
             this.store();
             this.downloadPic();
+            this.appElements.downloadButton.enable();
         });
         this.appElements.eraseAllButton.addEventListener('click', () => {
             this.store();
