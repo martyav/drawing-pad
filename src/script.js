@@ -1,3 +1,5 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 function loadJSON(callback) {
     // Credit: https://codepen.io/KryptoniteDove/post/load-json-file-locally-using-pure-javascript
     let xobj = new XMLHttpRequest();
@@ -13,301 +15,358 @@ function loadJSON(callback) {
     xobj.send(null);
 }
 
-function disable(button) {
-    if (!button.hasAttribute('disabled')) {
-        button.disabled = true;
+class Controller {
+    constructor(appState, appElements) {
+        this.appState = appState;
+        this.appElements = appElements;
+
+        this.draw = this.draw.bind(this);
+        this.prompt = this.prompt.bind(this);
+        this.updateCountDown = this.updateCountDown.bind(this);
+        this.stopStart = this.stopStart.bind(this);
+        this.hideTimer = this.hideTimer.bind(this);
+        this.revealTimer = this.revealTimer.bind(this);
+        this.handleUpdate = this.handleUpdate.bind(this);
+        this.restore = this.restore.bind(this);
+        this.downloadPic = this.downloadPic.bind(this);
+    }
+
+    draw(event) {
+        if (!this.appState.isDrawing) return;
+
+        this.appState.pointsToStroke.push({ x: this.appState.lastX, y: this.appState.lastY });
+
+        this.appElements.context.beginPath();
+        this.appElements.context.moveTo(this.appState.pointsToStroke[0].x, this.appState.pointsToStroke[0].y);
+        this.appState.pointsToStroke.forEach(point => this.appElements.context.lineTo(point.x, point.y));
+        this.appElements.context.stroke();
+        this.appState.lastX = event.offsetX;
+        this.appState.lastY = event.offsetY;
+    }
+
+    prompt() {
+        const selected = this.appState.promptList;
+        const randomIndex = selected === 'all' ? Math.floor(Math.random() * 199) : Math.floor(Math.random() * 99);
+        let promptText;
+
+        if (this.appState.prompts) {
+            promptText = this.appState.prompts[selected][randomIndex];
+            this.appElements.promptDisplay.innerHTML = `${ promptText }.`;
+        } else {
+            let display = this.appElements.promptDisplay;
+            let prompts = this.appState.prompts;
+
+            let callback = function (response) {
+                const topLevelJSON = JSON.parse(response);
+                
+                promptText = selected === 'all' ? topLevelJSON.data.fun.concat(...topLevelJSON.data.serious)[randomIndex] : topLevelJSON.data[selected][randomIndex];
+
+                display.innerHTML = `${ promptText }.`;
+
+                prompts = {
+                    fun: topLevelJSON.data.fun,
+                    serious: topLevelJSON.data.serious,
+                    all: topLevelJSON.data.fun.concat(...topLevelJSON.data.serious)
+                }
+            }
+
+            loadJSON(callback);
+        }
+    }
+
+    handleUpdate(event) {
+        const property = `${ event.target.name }`;
+        const value = `${ event.target.value }`;
+
+        this.appState[property] = value;
+
+        switch (property) {
+            case 'color':
+                this.appElements.context.strokeStyle = value;
+                this.appElements.colorLabel.innerHTML = `Pen Color: ${ value }`;
+                break;
+            case 'width':
+                this.appElements.context.lineWidth = value;
+                this.appElements.strokeLabel.innerHTML = `Pen Width: ${ value }`;
+                break;
+            case 'nib':
+                this.appElements.context.lineCap = value;
+                break;
+        }
+    }
+
+    restore(event) {
+        let savedImg = new Image();
+        savedImg.src = this.appState.imageAsData;
+
+        savedImg.onload = () => { // If you do not specify the below code inside of a closure onload of the image, you will get an aggravating effect of the canvas clearing on the first click and then behaving correctly, i.e. restoring, on the second click
+            this.eraseAll();
+            this.appElements.context.drawImage(savedImg, 0, 0, this.appElements.canvas.width, this.appElements.canvas.height);
+        }
+
+        event.target.disable();
+    }
+
+    store() {
+        this.appState.imageAsData = this.appElements.canvas.toDataURL('image/png')
+    }
+
+    downloadPic(event) {
+        download(this.appState.imageAsData, "drawing-from-drawing-pad.png", "image/png");
+        event.target.disable();
+    }
+
+    eraseAll() {
+        this.appElements.context.clearRect(0, 0, this.appElements.canvas.width, this.appElements.canvas.height);
+        this.appElements.context.fillStyle = this.appState.background;
+        this.appElements.context.fillRect(5, 5, (this.appElements.canvas.width - 10), (this.appElements.canvas.height - 10)); // off by 5 to preserve outline
+    }
+
+    hideTimer() {
+        let reveal;
+
+        if (document.querySelector('.reveal')) {
+            reveal = document.querySelector('.reveal');
+            reveal.style.opacity = '1.0';
+        } else {
+            reveal = document.createElement('button');
+            reveal.classList.add('reveal');
+            reveal.innerHTML = 'Reveal';
+
+            document.body.appendChild(reveal);
+            reveal.addEventListener('click', this.revealTimer);
+        }
+
+        this.appElements.timer.style.transform = `translate(0, -${ timer.offsetHeight }px)`;
+        reveal.style.transform = `translate(0, -${ timer.offsetHeight - 10 }px)`;
+    }
+
+    revealTimer() {
+        const reveal = document.querySelector('.reveal');
+
+        this.appElements.timer.style.transform = `translate(0, 0)`;
+        reveal.style.transform = `translate(0, -200px)`;
+        reveal.style.opacity = '0.0';
+    }
+
+    updateCountDown() {
+        const time = this.appState.time;
+
+        if (time <= 0) {
+            clearInterval(this.appState.interval);
+            this.appState.isCounting = false;
+        }
+
+        const minutes = Math.floor((time / 60000) % 60);
+        const seconds = Math.floor((time / 1000) % 60);
+
+        this.appElements.minutesDiv.innerHTML = minutes < 10 ? `0${Math.floor(minutes)}` : Math.floor(minutes);
+        this.appElements.secondsDiv.innerHTML = seconds < 10 ? `0${Math.floor(seconds)}` : Math.floor(seconds);
+
+        this.appState.time -= this.appState.throttle;
+    }
+
+    startTimer() {
+        this.appState.interval = setInterval(this.updateCountDown, 1000)
+    }
+
+    stopStart() {
+        if (this.appState.isCounting) {
+            this.appState.isCounting = false;
+            clearInterval(this.appState.interval);
+            this.lightDownCountdown();
+        } else {
+            if (this.appState.time <= 0) this.appState.time = this.appState.timeLimit;
+
+            this.appState.isCounting = true;
+            this.startTimer();
+            this.lightUpCountdown();
+        }
+    }
+
+    lightUpCountdown() {
+        this.appElements.countdown.classList.add('lightUp')}
+
+    lightDownCountdown() {
+        this.appElements.countdown.classList.remove('lightUp')
+    }
+
+    setCanvasProperties() {
+        this.appElements.canvas.width = this.appElements.canvas.offsetWidth;
+        this.appElements.canvas.height = this.appElements.canvas.offsetHeight;
+
+        this.appElements.context.fillStyle = this.appState.background;
+        this.appElements.context.fillRect(5, 5, (this.appElements.canvas.width - 10), (this.appElements.canvas.height - 10)); // off by 5 to preserve outline
+
+        this.appElements.context.strokeStyle = this.appState.color;
+        this.appElements.context.lineWidth = this.appState.width;
+        this.appElements.context.lineCap = this.appState.nib;
+    }
+
+    setLabels() {
+        this.appElements.colorLabel.innerHTML = `Pen Color: ${ this.appState.color }`;
+        this.appElements.strokeLabel.innerHTML = `Pen Width: ${ this.appState.width }`;
+    }
+
+    addEventListeners() {
+        this.appElements.canvas.addEventListener('mousemove', this.draw);
+        this.appElements.canvas.addEventListener('mousedown', () => {
+            this.store();
+            this.appElements.downloadButton.enable();
+            this.appElements.undoButton.enable();
+
+            this.appState.isDrawing = true;
+            this.appState.lastX = event.offsetX;
+            this.appState.lastY = event.offsetY;
+        });
+        this.appElements.canvas.addEventListener('mouseup', () => {
+            this.appState.pointsToStroke.length = 0;
+            this.appState.isDrawing = false;
+        });
+        this.appElements.canvas.addEventListener('mouseout', () => {
+            this.appState.pointsToStroke.length = 0;
+            this.appState.isDrawing = false;
+        });
+
+        this.appElements.inputs.forEach(input => input.addEventListener('change', this.handleUpdate));
+        this.appElements.nibMenu.addEventListener('change', this.handleUpdate);
+        this.appElements.radioButtons.forEach(radio => radio.addEventListener('change', this.handleUpdate));
+        this.appElements.promptButton.addEventListener('click', () => {
+            this.prompt();
+
+            if (this.appState.isCounting) clearInterval(this.appState.interval);
+
+            this.appState.time = this.appState.timeLimit;
+            this.appState.isCounting = true;
+
+            this.startTimer();
+            this.lightUpCountdown();
+        });
+        this.appElements.undoButton.addEventListener('click', this.restore);
+        this.appElements.downloadButton.addEventListener('click', () => {
+            this.store();
+            this.downloadPic();
+        });
+        this.appElements.eraseAllButton.addEventListener('click', () => {
+            this.store();
+            this.eraseAll();
+            this.appElements.undoButton.enable();
+        });
+
+        this.appElements.hideButton.addEventListener('click', this.hideTimer);
+        this.appElements.stopStartButton.addEventListener('click', this.stopStart);
     }
 }
 
-function enable(button) {
-    if (button.hasAttribute('disabled')) {
-        button.disabled = false;
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    let appState = {
-        // Canvas & context state
-        color: '#000000',
-        background: 'white',
-        width: 10,
-        nib: 'round',
-        isDrawing: false,
-        lastX: 0,
-        lastY: 0,
-        pointsToStroke: [],
-        imageAsData: null,
+class InitialState {
+    constructor() {
+        this.color = '#000000';
+        this.background = 'white';
+        this.width = 10;
+        this.nib = 'round';
+        this.isDrawing = false;
+        this.lastX = 0;
+        this.lastY = 0;
+        this.pointsToStroke = [];
+        this.imageAsData;
     
         // Timer state
-        isCounting: false,
-        time: 0,
-        throttle: 1000,
-        timeLimit: 60000,
-        interval: null,
+        this.isCounting = false;
+        this.time = 0;
+        this.throttle = 1000;
+        this.timeLimit = 60000;
+        this.interval;
     
         // Prompt state
-        promptList: 'all'
+        this.promptList = 'all';
     }
-    
-    const appElements = {
+}
+
+class GuiReferences {
+    constructor(canvas, context, promptDisplay, radioButtons, promptList, promptButton, timer, hideButton, countdown, minutesDiv, secondsDiv, stopStartButton, inputs, colorInput, widthInput, nibInput, colorLabel, strokeLabel, nibMenu, undoButton, downloadButton, eraseAllButton) {
+        this.canvas = canvas;
+        this.context = context;
+
+        this.promptDisplay = promptDisplay;
+        this.radioButtons = radioButtons;
+        this.promptList = promptList;
+        this.promptButton = promptButton;
+
+        this.timer = timer;
+        this.hideButton = hideButton;
+        this.countdown = countdown;
+        this.minutesDiv = minutesDiv;
+        this.secondsDiv = secondsDiv;
+        this.stopStartButton = stopStartButton;
+
+        this.inputs = inputs;
+        this.colorInput = colorInput;
+        this.widthInput = widthInput;
+        this.nibInput = nibInput;
+
+        this.colorLabel = colorLabel;
+        this.strokeLabel = strokeLabel;
+        this.nibMenu = nibMenu
+
+        this.undoButton = undoButton;
+        this.downloadButton = downloadButton;
+        this.eraseAllButton = eraseAllButton;
+    }
+}
+
+HTMLButtonElement.prototype.disable = function () {
+    if (!this.hasAttribute('disabled')) this.disabled = true;
+}
+
+HTMLButtonElement.prototype.enable =  function() {
+    if (this.hasAttribute('disabled')) this.disabled = false;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+document.addEventListener("DOMContentLoaded", () => {
+    const elementBag = {
         canvas: document.querySelector("#drawHere"),
         context: document.querySelector("#drawHere").getContext("2d"),
-    
+
         promptDisplay: document.querySelector('#promptDisplay'),
         radioButtons: document.querySelectorAll('input[type="radio"]'),
         promptList: document.querySelector('input[name="promptList"]:checked').value,
         promptButton: document.querySelector('#prompt'),
-    
+
         timer: document.querySelector('#timer'),
         hideButton: document.querySelector('.hide'),
         countdown: document.querySelector('.countdown'),
         minutesDiv: document.querySelector('.minutes'),
         secondsDiv: document.querySelector('.seconds'),
         stopStartButton: document.querySelector('.stopStart'),
-    
+
         inputs: Array.from(document.querySelectorAll(`#controls input`)),
         colorInput: document.querySelector('[name=color]').value,
         widthInput: document.querySelector('[name=width]').value,
         nibInput: document.querySelector('[name=nib]').value,
-        
+
         colorLabel: document.querySelector('[for=color]'),
         strokeLabel: document.querySelector('[for=width]'),
         nibMenu: document.querySelector('[name=nib]'),
-    
+
         undoButton: document.getElementById('undo'),
         downloadButton: document.getElementById('download'),
-        eraseAllButton: document.getElementById('eraseAll'),
+        eraseAllButton: document.getElementById('eraseAll')
     }
 
-    function draw(event) {
-        const isDrawing = appState.isDrawing;
-    
-        if (!isDrawing) {
-            return;
-        }
-    
-        appState.pointsToStroke.push({ x: appState.lastX, y: appState.lastY });
-    
-        appElements.context.beginPath();
-        appElements.context.moveTo(appState.pointsToStroke[0].x, appState.pointsToStroke[0].y);
-        appState.pointsToStroke.forEach(point => appElements.context.lineTo(point.x, point.y));
-        appElements.context.stroke();
-        appState.lastX = event.offsetX;
-        appState.lastY = event.offsetY;
-    }
-    
-    function handleUpdate() {
-        const property = `${this.name}`;
-        const value = `${this.value}`;
-        console.log(property, value);
-    
-        appState[property] = value;
-    
-        switch (property) {
-            case 'color':
-                appElements.context.strokeStyle = value;
-                appElements.colorLabel.innerHTML = `Pen Color: ${ value }`;
-                break;
-            case 'width':
-                appElements.context.lineWidth = value;
-                appElements.strokeLabel.innerHTML = `Pen Width: ${ value }`;
-                break;
-            case 'nib':
-                appElements.context.lineCap = value;
-                break;
-        }
-    }
-    
-    function prompt() {
-        const selected = appState.promptList;
-        const randomIndex = selected === 'all' ? Math.floor(Math.random() * 199) : Math.floor(Math.random() * 99);
-    
-        loadJSON(function (response) {
-            let topLevelJSON = JSON.parse(response);
-            let fun = topLevelJSON.data.fun;
-            let serious = topLevelJSON.data.serious;
-            let allPrompts = fun.concat(...serious);
-            let promptText = selected === 'fun' ? fun[randomIndex] : selected === 'serious' ? serious[randomIndex] : allPrompts[randomIndex];
-    
-            appElements.promptDisplay.innerHTML = `${promptText}.`;
-        });
-    }
-    
-    function restore(event) {
-        let savedImg = new Image();
-        savedImg.src = appState.imageAsData;
-    
-        savedImg.onload = () => { // If you do not specify the below code inside of a closure onload of the image, you will get an aggravating effect of the canvas clearing on the first click and then behaving correctly, i.e. restoring, on the second click
-            eraseAll();
-            appElements.context.drawImage(savedImg, 0, 0, appElements.canvas.width, appElements.canvas.height);
-        }
-    
-        disable(event.target);
-    }
-    
-    function store() {
-        appState.imageAsData = appElements.canvas.toDataURL('image/png');
-    }
-    
-    function downloadPic(event) {
-        download(appState.imageAsData, "drawing-from-drawing-pad.png", "image/png");
-        disable(event.target);
-    }
-    
-    function eraseAll() {
-        appElements.context.clearRect(0, 0, appElements.canvas.width, appElements.canvas.height);
-        appElements.context.fillStyle = "white";
-        appElements.context.fillRect(5, 5, (appElements.canvas.width - 10), (appElements.canvas.height - 10)); // off by 5 to preserve outline
-    }
-    
-    function hideTimer() {
-        let reveal;
-    
-        if (!document.querySelector('.reveal')) {
-            reveal = document.createElement('button');
-            reveal.classList.add('reveal');
-            reveal.innerHTML = 'Reveal';
-    
-            document.body.appendChild(reveal);
-            reveal.addEventListener('click', revealTimer);
-        } else {
-            reveal = document.querySelector('.reveal');
-            reveal.style.opacity = '1.0';
-        }
-    
-        appElements.timer.style.transform = `translate(0, -${timer.offsetHeight}px)`;
-        reveal.style.transform = `translate(0, -${timer.offsetHeight - 10}px)`;
-    }
-    
-    function revealTimer() {
-        const reveal = document.querySelector('.reveal');
-    
-        appElements.timer.style.transform = `translate(0, 0)`;
-        reveal.style.transform = `translate(0, -200px)`;
-        reveal.style.opacity = '0.0';
-    }
-    
-    function updateCountDown() {
-        const time = appState.time;
+    const appState = new InitialState();
 
-        if (time <= 0) {
-            clearInterval(appState.interval);
-            appState.isCounting = false;
-        }
-    
-        const minutes = Math.floor((time / 60000) % 60);
-        const seconds = Math.floor((time / 1000) % 60);
-    
-        appElements.minutesDiv.innerHTML = minutes < 10 ? `0${Math.floor(minutes)}` : Math.floor(minutes);
-        appElements.secondsDiv.innerHTML = seconds < 10 ? `0${Math.floor(seconds)}` : Math.floor(seconds);
-    
-        appState.time -= appState.throttle;
-    }
-    
-    function startTimer() {
-        appState.interval = setInterval(updateCountDown, 1000);
-    }
-    
-    function stopStart() {
-        if (!appState.isCounting) {
-            if (appState.time <= 0) {
-                appState.time = appState.timeLimit;
-            }
-    
-            appState.isCounting = true;
-            startTimer();
-            lightUpCountdown();
-        } else {
-            appState.isCounting = false;
-            clearInterval(appState.interval);
-            lightDownCountdown();
-        }
-    }
-    
-    function lightUpCountdown() {
-        appElements.countdown.classList.add('lightUp');
-    }
-    
-    function lightDownCountdown() {
-    
-        appElements.countdown.classList.remove('lightUp');
-    }
-    
-    function setCanvasProperties() {
-        appElements.canvas.width = appElements.canvas.offsetWidth;
-        appElements.canvas.height = appElements.canvas.offsetHeight;
-    
-        appElements.context.fillStyle = appState.background;
-        appElements.context.fillRect(5, 5, (appElements.canvas.width - 10), (appElements.canvas.height - 10)); // off by 5 to preserve outline
-    
-        appElements.context.strokeStyle = appState.color;
-        appElements.context.lineWidth = appState.width;
-        appElements.context.lineCap = appState.nib;
-    }
-    
-    function setLabels() {
-        appElements.colorLabel.innerHTML = `Pen Color: ${ appState.color }`;
-        appElements.strokeLabel.innerHTML = `Pen Width: ${ appState.width }`;
-    }
-    
-    function addEventListeners() {
-        appElements.canvas.addEventListener('mousemove', draw);
-        appElements.canvas.addEventListener('mousedown', () => {
-            store();
-            enable(appElements.downloadButton);
-            enable(appElements.undoButton);
-    
-            appState.isDrawing = true;
-            appState.lastX = event.offsetX;
-            appState.lastY = event.offsetY;
-        });
-        appElements.canvas.addEventListener('mouseup', () => {
-            appState.pointsToStroke.length = 0;
-            appState.isDrawing = false;
-        });
-        appElements.canvas.addEventListener('mouseout', () => {
-            appState.pointsToStroke.length = 0;
-            appState.isDrawing = false;
-        });
-    
-        appElements.inputs.forEach(input => input.addEventListener('change', handleUpdate));
-        appElements.nibMenu.addEventListener('change', handleUpdate);
-        appElements.radioButtons.forEach(radio => radio.addEventListener('change', handleUpdate));
-        appElements.promptButton.addEventListener('click', () => {
-            prompt();
-    
-            if (appState.isCounting) {
-                clearInterval(appState.interval);
-            }
-    
-            appState.time = appState.timeLimit;
-            appState.isCounting = true;
-    
-            startTimer();
-            lightUpCountdown();
-        });
-        appElements.undoButton.addEventListener('click', restore);
-        appElements.downloadButton.addEventListener('click', () => {
-            store();
-            downloadPic();
-        });
-        appElements.eraseAllButton.addEventListener('click', () => {
-            store();
-            eraseAll();
-            enable(appElements.undoButton);
-        });
-    
-        appElements.hideButton.addEventListener('click', hideTimer);
-        appElements.stopStartButton.addEventListener('click', stopStart);
-    }
+    const appElements = Object.assign(new GuiReferences, elementBag);
+    const controller = new Controller(appState, appElements);
 
-    store();
-    setCanvasProperties();
-    setLabels();
-    addEventListeners();
+    controller.store();
+    controller.setCanvasProperties();
+    controller.setLabels();
+    controller.addEventListeners();
 });
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //download.js v4.2, by dandavis; 2008-2016. [CCBY2] see http://danml.com/download.html for tests/usage
 // v1 landed a FF+Chrome compat way of downloading strings to local un-named files, upgraded to use a hidden frame and optional mime
