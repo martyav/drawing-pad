@@ -1,6 +1,6 @@
 // This is a very long file because vanilla doesn't support imports. 
 // If we wanted to separate things out, we could do it ES6 style (import/export), or CommonJS style (export/require).
-// Either choice would mean using Node.
+// Either choice would mean adding dependencies.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         promptDisplay: document.querySelector('#promptDisplay'),
         radioButtons: document.querySelectorAll('input[type="radio"]'),
-        promptList: document.querySelector('input[name="promptList"]:checked').value,
+        promptKey: document.querySelector('input[name="promptList"]:checked').value,
         promptButton: document.querySelector('#prompt'),
 
         timer: document.querySelector('#timer'),
@@ -22,9 +22,9 @@ document.addEventListener("DOMContentLoaded", () => {
         stopStartButton: document.querySelector('.stopStart'),
 
         inputs: Array.from(document.querySelectorAll(`#controls input`)),
-        colorInput: document.querySelector('[name=color]').value,
-        widthInput: document.querySelector('[name=width]').value,
-        nibInput: document.querySelector('[name=nib]').value,
+        colorInputValue: document.querySelector('[name=color]').value,
+        widthInputValue: document.querySelector('[name=width]').value,
+        nibInputValue: document.querySelector('[name=nib]').value,
 
         colorLabel: document.querySelector('[for=color]'),
         strokeLabel: document.querySelector('[for=width]'),
@@ -35,11 +35,10 @@ document.addEventListener("DOMContentLoaded", () => {
         eraseAllButton: document.getElementById('eraseAll')
     }
 
-    const appState = new InitialState();
+    const appState = new StateOrganizer();
     const appElements = Object.assign(new GuiReferences, elementBag);
     const controller = new Controller(appState, appElements);
 
-    controller.store();
     controller.setCanvasProperties();
     controller.setLabels();
     controller.addEventListeners();
@@ -57,8 +56,189 @@ HTMLButtonElement.prototype.enable =  function() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+class GuiReferences {
+    constructor(canvas, context, promptDisplay, radioButtons, promptKey, promptButton, timer, hideButton, countdown, minutesDiv, secondsDiv, stopStartButton, inputs, colorInputValue, widthInputValue, nibInputValue, colorLabel, strokeLabel, nibMenu, undoButton, downloadButton, eraseAllButton) {
+        this.canvas = canvas;
+        this.context = context;
+
+        this.promptDisplay = promptDisplay;
+        this.radioButtons = radioButtons;
+        this.promptKey = promptKey;
+        this.promptButton = promptButton;
+
+        this.timer = timer;
+        this.hideButton = hideButton;
+        this.countdown = countdown;
+        this.minutesDiv = minutesDiv;
+        this.secondsDiv = secondsDiv;
+        this.stopStartButton = stopStartButton;
+
+        this.inputs = inputs;
+
+        this.colorLabel = colorLabel;
+        this.strokeLabel = strokeLabel;
+        this.nibMenu = nibMenu
+
+        this.colorInputValue = colorInputValue;
+        this.widthInputValueValue = widthInputValue;
+        this.nibInputValue = nibInputValue;
+
+
+        this.undoButton = undoButton;
+        this.downloadButton = downloadButton;
+        this.eraseAllButton = eraseAllButton;
+    }
+}
+
+class StateOrganizer {
+    constructor() {
+        // Without `this`, these properties are kept inside the constructor and are inaccessible elsewhere, making them essentially private
+        let _color = '#000000';
+        let _background = 'white';
+        let _width = 10;
+        let _nib = 'round';
+        let _isDrawing = false;
+        let _lastX = 0;
+        let _lastY = 0;
+        let _pointsToStroke = [];
+        let _imageData;
+    
+        // Timer state
+        let _isCounting = false;
+        let _time = 0;
+        let _throttle = 1000;
+        let _timeLimit = 60000;
+        let _interval;
+    
+        // Prompt state
+        let _promptKey = 'all';
+        let _prompts;
+
+        // Getters 
+        this.getColor = () => _color; 
+        this.getBackground = () => _background;
+        this.getWidth = () => _width;
+        this.getNib = () => _nib;
+        this.getIsDrawing = () => _isDrawing;
+        this.getPointsToStroke = () => _pointsToStroke;
+        this.getFirstX = () => _pointsToStroke[0].x;
+        this.getFirstY = () => _pointsToStroke[0].y;
+        // LastX & lastY are separate from the points array because they are based on the user moving their cursor, with or without drawing
+        this.getLastX = () => _lastX;
+        this.getLastY = () => _lastY;
+        this.getImageData = () => _imageData;
+        this.getIsCounting = () => _isCounting;
+        this.getTime = () => _time;
+        this.getThrottle = () => _throttle;
+        this.getTimeLimit = () => _timeLimit;
+        this.getInterval = () => _interval;
+        this.getPromptKey = () => _promptKey;
+        this.getPrompts = () => _prompts;
+
+        // Setters
+        this.setColor = function(color) {
+            if (typeof color !== 'string' || color[0] !== "#" || color.length !== 7) throw new TypeError(`Not a valid color hex code: ${ color }`);
+
+            _color = color;
+        }
+        
+        this.setWidth = function(width) {
+            if (typeof parseInt(width) !== 'number') throw new TypeError(`Not a valid width: ${ width }`);
+            if (width < 1 || width > 100) throw new RangeError(`Width is not in range: ${ width }`);
+
+            _width = width;
+        }
+        
+        this.setNib = function(nib) {
+            if (typeof nib != 'string') throw new TypeError(`Not a valid nib: ${ nib }`);
+            
+            if (nib === 'square' || nib === 'round') {
+                _nib = nib;
+            } else {
+                throw new Error(`Nib must be either square or round: ${ nib }`);
+            }
+        }
+        
+        this.setIsDrawing = function(isDrawing) {
+            if (typeof isDrawing != 'boolean') throw new TypeError(`Not a valid isDrawing value: ${ isDrawing }`);
+
+            _isDrawing = isDrawing;
+        }
+        
+        this.addPoint = function(point) {
+            if (!point.x || !point.y || typeof point.x !== 'number' || typeof point.y !== 'number') throw new TypeError(`Arg lacks valid coordinate values: x ${ point.x } y ${ point.y }`);
+
+            _pointsToStroke.push({ x: point.x, y: point.y });
+        }
+        
+        this.clearPoints = () => _pointsToStroke.length = 0;
+        
+        this.setLastX = function(x) {
+            if (typeof x !== 'number') throw new TypeError(`Not a number: ${ x }`);
+
+            _lastX = x;
+        }
+
+        this.setLastY = function(y) {
+            if (typeof y !== 'number') throw new TypeError(`Not a number: ${ y }`);
+
+            _lastY = y;
+        }
+
+        this.setImageData = function(imageData) {
+            if (typeof imageData != 'string' || !imageData.startsWith('data:image/png;base64,')) throw new TypeError(`Not a valid image data URI: ${ imageData }`);
+
+            _imageData = imageData;
+        }
+
+        this.setTime = function(time) {
+            if (typeof time !== 'number') throw new TypeError(`Not a valid time: ${ time }`);
+            if (time < 0 || time > _timeLimit) throw new RangeError(`Time not in range: ${ time }`);
+
+            _time = time;
+        }
+
+        this.resetTime = () => _time = _timeLimit;
+
+        this.decrementTime = () => _time -= _throttle;
+        
+        this.setIsCounting = function(isCounting) {
+            if (typeof isCounting != 'boolean') throw new TypeError(`Not a valid isDrawingValue: ${ isCounting }`);
+
+            _isCounting = isCounting;
+        }
+
+        this.clearInterval = () => clearInterval(_interval);
+
+        this.setInterval = function(interval) {
+            if (typeof interval != 'number') throw new TypeError(`Not a valid interval value: ${ interval }`);
+
+            _interval = interval;
+        }
+
+        this.setPromptKey = function(key) {
+            if (typeof key != 'string') throw new TypeError(`Not a valid prompt list key: ${ key }`);
+            
+            if (key === 'all' || key === 'fun' || key === 'serious') {
+                _promptKey = key;
+            } else {
+                throw new Error(`The only valid prompt list values are fun, serious, or all: ${ key }`);
+            }
+        }
+
+        this.setPrompts = function(prompts) {
+            if (!prompts.fun || !prompts.serious || !prompts.all) throw new TypeError(`Prompts must include keys for all, serious, and fun: ${ prompts }`);
+
+            _prompts = prompts;
+        }
+    }
+}
+
 class Controller {
     constructor(appState, appElements) {
+        if (!(appState instanceof StateOrganizer)) throw TypeError('AppState must be of type StateOrganizer');
+        if (!(appElements instanceof GuiReferences)) throw TypeError('AppElements must be of type GUIReferences');
+
         this.appState = appState;
         this.appElements = appElements;
 
@@ -102,7 +282,7 @@ class Controller {
     }
 
     prompt() {
-        const selected = this.appState.getPromptList();
+        const selected = this.appState.getPromptKey();
         const randomIndex = selected === 'all' ? Math.floor(Math.random() * 199) : Math.floor(Math.random() * 99);
         let promptText;
 
@@ -110,6 +290,7 @@ class Controller {
             promptText = this.appState.prompts[selected][randomIndex];
             this.appElements.promptDisplay.innerHTML = `${ promptText }.`;
         } else {
+            // This may appear redundant, but if prompts does not have anything inside yet, we must update the UI inside the callback, because it is returning after the function exits, as callbacks are wont to do. Only loading after the first time the user clicks the button allows us to avoid making an unnecessary call if the user just wants to draw without an artist prompt.
             const display = this.appElements.promptDisplay;
             const state = this.appState;
 
@@ -120,11 +301,11 @@ class Controller {
 
                 display.innerHTML = `${ promptText }.`;
 
-                state.prompts = {
+                state.setPrompts({
                     fun: topLevelJSON.data.fun,
                     serious: topLevelJSON.data.serious,
                     all: topLevelJSON.data.fun.concat(...topLevelJSON.data.serious)
-                }
+                });
             }
 
             const resource = 'https://raw.githubusercontent.com/martyav/drawing-pad/master/src/prompts.json';
@@ -153,7 +334,7 @@ class Controller {
                 this.appElements.context.lineCap = value;
                 break;
             case 'promptList':
-                this.appState.setPromptList(value);
+                this.appState.setPromptKey(value);
         }
     }
 
@@ -317,174 +498,6 @@ class Controller {
 
         this.appElements.hideButton.addEventListener('click', this.hideTimer);
         this.appElements.stopStartButton.addEventListener('click', this.stopStart);
-    }
-}
-
-class InitialState {
-    constructor() {
-        // Without `this`, these properties are kept inside the constructor and are inaccessible elsewhere
-        let _color = '#000000';
-        let _background = 'white';
-        let _width = 10;
-        let _nib = 'round';
-        let _isDrawing = false;
-        let _lastX = 0;
-        let _lastY = 0;
-        let _pointsToStroke = [];
-        let _imageData;
-    
-        // Timer state
-        let _isCounting = false;
-        let _time = 0;
-        let _throttle = 1000;
-        let _timeLimit = 60000;
-        let _interval;
-    
-        // Prompt state
-        let _promptList = 'all';
-        let _prompts;
-
-        // Getters 
-        this.getColor = () => _color; 
-        this.getBackground = () => _background;
-        this.getWidth = () => _width;
-        this.getNib = () => _nib;
-        this.getIsDrawing = () => _isDrawing;
-        this.getPointsToStroke = () => _pointsToStroke;
-        this.getFirstX = () => _pointsToStroke[0].x;
-        this.getFirstY = () => _pointsToStroke[0].y;
-        // LastX & lastY are separate from the points array because they are based on the user moving their cursor, with or without drawing
-        this.getLastX = () => _lastX;
-        this.getLastY = () => _lastY;
-        this.getImageData = () => _imageData;
-        this.getIsCounting = () => _isCounting;
-        this.getTime = () => _time;
-        this.getThrottle = () => _throttle;
-        this.getTimeLimit = () => _timeLimit;
-        this.getInterval = () => _interval;
-        this.getPromptList = () => _promptList;
-        this.getPrompts = () => _prompts;
-
-        // Setters
-        this.setColor = function(color) {
-            if (typeof color != 'string' || color[0] != "#" || color.length != 7) throw new TypeError(`Not a valid color hex code: ${ color }`);
-
-            _color = color;
-        }
-        
-        this.setWidth = function(width) {
-            if (typeof parseInt(width) != 'number') throw new TypeError(`Not a valid width: ${ width }`);
-            if (width < 1 || width > 100) throw new RangeError(`Width is not in range: ${ width }`);
-
-            _width = width;
-        }
-        
-        this.setNib = function(nib) {
-            if (typeof nib != 'string') throw new TypeError(`Not a valid nib: ${ nib }`);
-            
-            if (nib == 'square' || nib == 'round') {
-                _nib = nib;
-            } else {
-                throw new Error(`Nib must be either square or round: ${ nib }`);
-            }
-        }
-        
-        this.setIsDrawing = function(isDrawing) {
-            if (typeof isDrawing != 'boolean') throw new TypeError(`Not a valid isDrawing value: ${ isDrawing }`);
-
-            _isDrawing = isDrawing;
-        }
-        
-        this.addPoint = function(point) {
-            if (!point.x || !point.y || typeof point.x != 'number' || typeof point.y != 'number') throw new TypeError(`Arg lacks valid coordinate values: x ${ point.x } y ${ point.y }`);
-
-            _pointsToStroke.push({ x: point.x, y: point.y });
-        }
-        
-        this.clearPoints = () => _pointsToStroke.length = 0;
-        
-        this.setLastX = function(x) {
-            if (typeof x != 'number') throw new TypeError(`Not a number: ${ x }`);
-
-            _lastX = x;
-        }
-        this.setLastY = function(y) {
-            if (typeof y != 'number') throw new TypeError(`Not a number: ${ y }`);
-
-            _lastY = y;
-        }
-        this.setImageData = function(imageData) {
-            if (typeof imageData != 'string' || !imageData.startsWith('data:image/png;base64,')) throw new TypeError(`Not a valid image data URI: ${ imageData }`);
-
-            _imageData = imageData;
-        }
-
-        this.setTime = function(time) {
-            if (typeof time != 'number') throw new TypeError(`Not a valid time: ${ time }`);
-            if (time < 0 || time > _timeLimit) throw new RangeError(`Time not in range: ${ time }`);
-
-            _time = time;
-        }
-
-        this.resetTime = () => _time = _timeLimit;
-
-        this.decrementTime = () => _time -= _throttle;
-        
-        this.setIsCounting = function(isCounting) {
-            if (typeof isCounting != 'boolean') throw new TypeError(`Not a valid isDrawingValue: ${ isCounting }`);
-
-            _isCounting = isCounting;
-        }
-
-        this.clearInterval = () => clearInterval(_interval);
-
-        this.setInterval = function(interval) {
-            if (typeof interval != 'number') throw new TypeError(`Not a valid interval value: ${ interval }`);
-
-            _interval = interval;
-        }
-
-        this.setPromptList = function(key) {
-            if (typeof key != 'string') throw new TypeError(`Not a valid prompt list key: ${ key }`);
-            
-            if (key === 'all' || key === 'fun' || key === 'serious') {
-                _promptList = key;
-            } else {
-                throw new Error(`The only valid prompt list values are all, fun, or serious: ${ key }`);
-            }
-        }
-    }
-}
-
-class GuiReferences {
-    constructor(canvas, context, promptDisplay, radioButtons, promptList, promptButton, timer, hideButton, countdown, minutesDiv, secondsDiv, stopStartButton, inputs, colorInput, widthInput, nibInput, colorLabel, strokeLabel, nibMenu, undoButton, downloadButton, eraseAllButton) {
-        this.canvas = canvas;
-        this.context = context;
-
-        this.promptDisplay = promptDisplay;
-        this.radioButtons = radioButtons;
-        this.promptList = promptList;
-        this.promptButton = promptButton;
-
-        this.timer = timer;
-        this.hideButton = hideButton;
-        this.countdown = countdown;
-        this.minutesDiv = minutesDiv;
-        this.secondsDiv = secondsDiv;
-        this.stopStartButton = stopStartButton;
-
-        this.inputs = inputs;
-        this.colorInput = colorInput;
-        this.widthInput = widthInput;
-        this.nibInput = nibInput;
-
-        this.colorLabel = colorLabel;
-        this.strokeLabel = strokeLabel;
-        this.nibMenu = nibMenu
-
-        this.undoButton = undoButton;
-        this.downloadButton = downloadButton;
-        this.eraseAllButton = eraseAllButton;
     }
 }
 
