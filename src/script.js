@@ -1,326 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-function loadJSON(callback) {
-    // Credit: https://codepen.io/KryptoniteDove/post/load-json-file-locally-using-pure-javascript
-    let xobj = new XMLHttpRequest();
-    xobj.overrideMimeType("application/json");
-    xobj.open('GET', 'https://raw.githubusercontent.com/martyav/drawing-pad/master/src/prompts.json', true);
-    xobj.onreadystatechange = function () {
-        if (xobj.readyState == 4 && xobj.status == "200") {
-            // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
-            callback(xobj.responseText);
-        }
-    };
-
-    xobj.send(null);
-}
-
-class Controller {
-    constructor(appState, appElements) {
-        this.appState = appState;
-        this.appElements = appElements;
-
-        this.draw = this.draw.bind(this);
-        this.prompt = this.prompt.bind(this);
-        this.updateCountDown = this.updateCountDown.bind(this);
-        this.stopStart = this.stopStart.bind(this);
-        this.hideTimer = this.hideTimer.bind(this);
-        this.revealTimer = this.revealTimer.bind(this);
-        this.handleUpdate = this.handleUpdate.bind(this);
-        this.restore = this.restore.bind(this);
-        this.downloadPic = this.downloadPic.bind(this);
-    }
-
-    draw(event) {
-        if (!this.appState.isDrawing) return;
-
-        this.appState.pointsToStroke.push({ x: this.appState.lastX, y: this.appState.lastY });
-
-        this.appElements.context.beginPath();
-        this.appElements.context.moveTo(this.appState.pointsToStroke[0].x, this.appState.pointsToStroke[0].y);
-        this.appState.pointsToStroke.forEach(point => this.appElements.context.lineTo(point.x, point.y));
-        this.appElements.context.stroke();
-        this.appState.lastX = event.offsetX;
-        this.appState.lastY = event.offsetY;
-    }
-
-    prompt() {
-        const selected = this.appState.promptList;
-        const randomIndex = selected === 'all' ? Math.floor(Math.random() * 199) : Math.floor(Math.random() * 99);
-        let promptText;
-
-        if (this.appState.prompts) {
-            promptText = this.appState.prompts[selected][randomIndex];
-            this.appElements.promptDisplay.innerHTML = `${ promptText }.`;
-        } else {
-            let display = this.appElements.promptDisplay;
-            let prompts = this.appState.prompts;
-
-            let callback = function (response) {
-                const topLevelJSON = JSON.parse(response);
-                
-                promptText = selected === 'all' ? topLevelJSON.data.fun.concat(...topLevelJSON.data.serious)[randomIndex] : topLevelJSON.data[selected][randomIndex];
-
-                display.innerHTML = `${ promptText }.`;
-
-                prompts = {
-                    fun: topLevelJSON.data.fun,
-                    serious: topLevelJSON.data.serious,
-                    all: topLevelJSON.data.fun.concat(...topLevelJSON.data.serious)
-                }
-            }
-
-            loadJSON(callback);
-        }
-    }
-
-    handleUpdate(event) {
-        const property = `${ event.target.name }`;
-        const value = `${ event.target.value }`;
-
-        this.appState[property] = value;
-
-        switch (property) {
-            case 'color':
-                this.appElements.context.strokeStyle = value;
-                this.appElements.colorLabel.innerHTML = `Pen Color: ${ value }`;
-                break;
-            case 'width':
-                this.appElements.context.lineWidth = value;
-                this.appElements.strokeLabel.innerHTML = `Pen Width: ${ value }`;
-                break;
-            case 'nib':
-                this.appElements.context.lineCap = value;
-                break;
-        }
-    }
-
-    restore(event) {
-        let savedImg = new Image();
-        savedImg.src = this.appState.imageAsData;
-
-        savedImg.onload = () => { // If you do not specify the below code inside of a closure onload of the image, you will get an aggravating effect of the canvas clearing on the first click and then behaving correctly, i.e. restoring, on the second click
-            this.eraseAll();
-            this.appElements.context.drawImage(savedImg, 0, 0, this.appElements.canvas.width, this.appElements.canvas.height);
-        }
-
-        event.target.disable();
-    }
-
-    store() {
-        this.appState.imageAsData = this.appElements.canvas.toDataURL('image/png')
-    }
-
-    downloadPic() {
-        download(this.appState.imageAsData, "drawing-from-drawing-pad.png", "image/png");
-    }
-
-    eraseAll() {
-        this.appElements.context.clearRect(0, 0, this.appElements.canvas.width, this.appElements.canvas.height);
-        this.appElements.context.fillStyle = this.appState.background;
-        this.appElements.context.fillRect(5, 5, (this.appElements.canvas.width - 10), (this.appElements.canvas.height - 10)); // off by 5 to preserve outline
-    }
-
-    hideTimer() {
-        let reveal;
-
-        if (document.querySelector('.reveal')) {
-            reveal = document.querySelector('.reveal');
-            reveal.style.opacity = '1.0';
-        } else {
-            reveal = document.createElement('button');
-            reveal.classList.add('reveal');
-            reveal.innerHTML = 'Reveal';
-
-            document.body.appendChild(reveal);
-            reveal.addEventListener('click', this.revealTimer);
-        }
-
-        this.appElements.timer.style.transform = `translate(0, -${ timer.offsetHeight }px)`;
-        reveal.style.transform = `translate(0, -${ timer.offsetHeight - 10 }px)`;
-    }
-
-    revealTimer() {
-        const reveal = document.querySelector('.reveal');
-
-        this.appElements.timer.style.transform = `translate(0, 0)`;
-        reveal.style.transform = `translate(0, -200px)`;
-        reveal.style.opacity = '0.0';
-    }
-
-    updateCountDown() {
-        const time = this.appState.time;
-
-        if (time <= 0) {
-            clearInterval(this.appState.interval);
-            this.appState.isCounting = false;
-        }
-
-        const minutes = Math.floor((time / 60000) % 60);
-        const seconds = Math.floor((time / 1000) % 60);
-
-        this.appElements.minutesDiv.innerHTML = minutes < 10 ? `0${Math.floor(minutes)}` : Math.floor(minutes);
-        this.appElements.secondsDiv.innerHTML = seconds < 10 ? `0${Math.floor(seconds)}` : Math.floor(seconds);
-
-        this.appState.time -= this.appState.throttle;
-    }
-
-    startTimer() {
-        this.appState.interval = setInterval(this.updateCountDown, 1000)
-    }
-
-    stopStart() {
-        if (this.appState.isCounting) {
-            this.appState.isCounting = false;
-            clearInterval(this.appState.interval);
-            this.lightDownCountdown();
-        } else {
-            if (this.appState.time <= 0) this.appState.time = this.appState.timeLimit;
-
-            this.appState.isCounting = true;
-            this.startTimer();
-            this.lightUpCountdown();
-        }
-    }
-
-    lightUpCountdown() {
-        this.appElements.countdown.classList.add('lightUp')}
-
-    lightDownCountdown() {
-        this.appElements.countdown.classList.remove('lightUp')
-    }
-
-    setCanvasProperties() {
-        this.appElements.canvas.width = this.appElements.canvas.offsetWidth;
-        this.appElements.canvas.height = this.appElements.canvas.offsetHeight;
-
-        this.appElements.context.fillStyle = this.appState.background;
-        this.appElements.context.fillRect(5, 5, (this.appElements.canvas.width - 10), (this.appElements.canvas.height - 10)); // off by 5 to preserve outline
-
-        this.appElements.context.strokeStyle = this.appState.color;
-        this.appElements.context.lineWidth = this.appState.width;
-        this.appElements.context.lineCap = this.appState.nib;
-    }
-
-    setLabels() {
-        this.appElements.colorLabel.innerHTML = `Pen Color: ${ this.appState.color }`;
-        this.appElements.strokeLabel.innerHTML = `Pen Width: ${ this.appState.width }`;
-    }
-
-    addEventListeners() {
-        this.appElements.canvas.addEventListener('mousemove', this.draw);
-        this.appElements.canvas.addEventListener('mousedown', () => {
-            this.store();
-            this.appElements.downloadButton.enable();
-            this.appElements.undoButton.enable();
-
-            this.appState.isDrawing = true;
-            this.appState.lastX = event.offsetX;
-            this.appState.lastY = event.offsetY;
-        });
-        this.appElements.canvas.addEventListener('mouseup', () => {
-            this.appState.pointsToStroke.length = 0;
-            this.appState.isDrawing = false;
-        });
-        this.appElements.canvas.addEventListener('mouseout', () => {
-            this.appState.pointsToStroke.length = 0;
-            this.appState.isDrawing = false;
-        });
-
-        this.appElements.inputs.forEach(input => input.addEventListener('change', this.handleUpdate));
-        this.appElements.nibMenu.addEventListener('change', this.handleUpdate);
-        this.appElements.radioButtons.forEach(radio => radio.addEventListener('change', this.handleUpdate));
-        this.appElements.promptButton.addEventListener('click', () => {
-            this.prompt();
-
-            if (this.appState.isCounting) clearInterval(this.appState.interval);
-
-            this.appState.time = this.appState.timeLimit;
-            this.appState.isCounting = true;
-
-            this.startTimer();
-            this.lightUpCountdown();
-        });
-        this.appElements.undoButton.addEventListener('click', this.restore);
-        this.appElements.downloadButton.addEventListener('click', () => {
-            this.store();
-            this.downloadPic();
-            this.appElements.downloadButton.enable();
-        });
-        this.appElements.eraseAllButton.addEventListener('click', () => {
-            this.store();
-            this.eraseAll();
-            this.appElements.undoButton.enable();
-        });
-
-        this.appElements.hideButton.addEventListener('click', this.hideTimer);
-        this.appElements.stopStartButton.addEventListener('click', this.stopStart);
-    }
-}
-
-class InitialState {
-    constructor() {
-        this.color = '#000000';
-        this.background = 'white';
-        this.width = 10;
-        this.nib = 'round';
-        this.isDrawing = false;
-        this.lastX = 0;
-        this.lastY = 0;
-        this.pointsToStroke = [];
-        this.imageAsData;
-    
-        // Timer state
-        this.isCounting = false;
-        this.time = 0;
-        this.throttle = 1000;
-        this.timeLimit = 60000;
-        this.interval;
-    
-        // Prompt state
-        this.promptList = 'all';
-    }
-}
-
-class GuiReferences {
-    constructor(canvas, context, promptDisplay, radioButtons, promptList, promptButton, timer, hideButton, countdown, minutesDiv, secondsDiv, stopStartButton, inputs, colorInput, widthInput, nibInput, colorLabel, strokeLabel, nibMenu, undoButton, downloadButton, eraseAllButton) {
-        this.canvas = canvas;
-        this.context = context;
-
-        this.promptDisplay = promptDisplay;
-        this.radioButtons = radioButtons;
-        this.promptList = promptList;
-        this.promptButton = promptButton;
-
-        this.timer = timer;
-        this.hideButton = hideButton;
-        this.countdown = countdown;
-        this.minutesDiv = minutesDiv;
-        this.secondsDiv = secondsDiv;
-        this.stopStartButton = stopStartButton;
-
-        this.inputs = inputs;
-        this.colorInput = colorInput;
-        this.widthInput = widthInput;
-        this.nibInput = nibInput;
-
-        this.colorLabel = colorLabel;
-        this.strokeLabel = strokeLabel;
-        this.nibMenu = nibMenu
-
-        this.undoButton = undoButton;
-        this.downloadButton = downloadButton;
-        this.eraseAllButton = eraseAllButton;
-    }
-}
-
-HTMLButtonElement.prototype.disable = function () {
-    if (!this.hasAttribute('disabled')) this.disabled = true;
-}
-
-HTMLButtonElement.prototype.enable =  function() {
-    if (this.hasAttribute('disabled')) this.disabled = false;
-}
+// This is a very long file because vanilla doesn't support imports. 
+// If we wanted to separate things out, we could do it ES6 style (import/export), or CommonJS style (export/require).
+// Either choice would mean using Node.
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -356,7 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const appState = new InitialState();
-
     const appElements = Object.assign(new GuiReferences, elementBag);
     const controller = new Controller(appState, appElements);
 
@@ -365,6 +44,449 @@ document.addEventListener("DOMContentLoaded", () => {
     controller.setLabels();
     controller.addEventListeners();
 });
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+HTMLButtonElement.prototype.disable = function () {
+    if (!this.hasAttribute('disabled')) this.disabled = true;
+}
+
+HTMLButtonElement.prototype.enable =  function() {
+    if (this.hasAttribute('disabled')) this.disabled = false;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class Controller {
+    constructor(appState, appElements) {
+        this.appState = appState;
+        this.appElements = appElements;
+
+        this.draw = this.draw.bind(this);
+        this.prompt = this.prompt.bind(this);
+        this.updateCountDown = this.updateCountDown.bind(this);
+        this.stopStart = this.stopStart.bind(this);
+        this.hideTimer = this.hideTimer.bind(this);
+        this.revealTimer = this.revealTimer.bind(this);
+        this.handleUpdate = this.handleUpdate.bind(this);
+        this.restore = this.restore.bind(this);
+        this.downloadPic = this.downloadPic.bind(this);
+    }
+
+    loadJSON(callback, resource) {
+        // Credit: https://codepen.io/KryptoniteDove/post/load-json-file-locally-using-pure-javascript
+        let xobj = new XMLHttpRequest();
+        xobj.overrideMimeType("application/json");
+        xobj.open('GET', resource, true);
+        xobj.onreadystatechange = function () {
+            if (xobj.readyState == 4 && xobj.status == "200") {
+                // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
+                callback(xobj.responseText);
+            }
+        };
+    
+        xobj.send(null);
+    }
+
+    draw(event) {
+        if (!this.appState.getIsDrawing()) return;
+
+        this.appState.addPoint({ x: this.appState.getLastX(), y: this.appState.getLastY() })//pointsToStroke.push({ x: this.appState.lastX, y: this.appState.lastY });
+
+        this.appElements.context.beginPath();
+        this.appElements.context.moveTo(this.appState.getFirstX, this.appState.getFirstY);
+        this.appState.getPointsToStroke().forEach(point => this.appElements.context.lineTo(point.x, point.y));
+        this.appElements.context.stroke();
+        this.appState.setLastX(event.offsetX);
+        this.appState.setLastY(event.offsetY);
+    }
+
+    prompt() {
+        const selected = this.appState.getPromptList();
+        const randomIndex = selected === 'all' ? Math.floor(Math.random() * 199) : Math.floor(Math.random() * 99);
+        let promptText;
+
+        if (this.appState.prompts) {
+            promptText = this.appState.prompts[selected][randomIndex];
+            this.appElements.promptDisplay.innerHTML = `${ promptText }.`;
+        } else {
+            const display = this.appElements.promptDisplay;
+            const state = this.appState;
+
+            let callback = function (response) {
+                const topLevelJSON = JSON.parse(response);
+                
+                promptText = selected === 'all' ? topLevelJSON.data.fun.concat(...topLevelJSON.data.serious)[randomIndex] : topLevelJSON.data[selected][randomIndex];
+
+                display.innerHTML = `${ promptText }.`;
+
+                state.prompts = {
+                    fun: topLevelJSON.data.fun,
+                    serious: topLevelJSON.data.serious,
+                    all: topLevelJSON.data.fun.concat(...topLevelJSON.data.serious)
+                }
+            }
+
+            const resource = 'https://raw.githubusercontent.com/martyav/drawing-pad/master/src/prompts.json';
+
+            this.loadJSON(callback, resource);
+        }
+    }
+
+    handleUpdate(event) {
+        const property = `${ event.target.name }`;
+        const value = `${ event.target.value }`;
+
+        switch (property) {
+            case 'color':
+                this.appState.setColor(value);
+                this.appElements.context.strokeStyle = value;
+                this.appElements.colorLabel.innerHTML = `Pen Color: ${ value }`;
+                break;
+            case 'width':
+                this.appState.setWidth(value);
+                this.appElements.context.lineWidth = value;
+                this.appElements.strokeLabel.innerHTML = `Pen Width: ${ value }`;
+                break;
+            case 'nib':
+                this.appState.setNib(value);
+                this.appElements.context.lineCap = value;
+                break;
+            case 'promptList':
+                this.appState.setPromptList(value);
+        }
+    }
+
+    restore(event) {
+        let savedImg = new Image();
+        savedImg.src = this.appState.getImageData();
+
+        savedImg.onload = () => { // If you do not specify the below code inside of a closure onload of the image, you will get an aggravating effect of the canvas clearing on the first click and then behaving correctly, i.e. restoring, on the second click
+            this.eraseAll();
+            this.appElements.context.drawImage(savedImg, 0, 0, this.appElements.canvas.width, this.appElements.canvas.height);
+        }
+
+        event.target.disable();
+    }
+
+    store() {
+        this.appState.setImageData(this.appElements.canvas.toDataURL('image/png'));
+    }
+
+    downloadPic() {
+        download(this.appState.getImageData(), "drawing-from-drawing-pad.png", "image/png");
+    }
+
+    eraseAll() {
+        this.appElements.context.clearRect(0, 0, this.appElements.canvas.width, this.appElements.canvas.height);
+        this.appElements.context.fillStyle = this.appState.getBackground();
+        this.appElements.context.fillRect(5, 5, (this.appElements.canvas.width - 10), (this.appElements.canvas.height - 10)); // off by 5 to preserve outline
+    }
+
+    hideTimer() {
+        let reveal;
+
+        if (document.querySelector('.reveal')) {
+            reveal = document.querySelector('.reveal');
+            reveal.style.opacity = '1.0';
+        } else {
+            reveal = document.createElement('button');
+            reveal.classList.add('reveal');
+            reveal.innerHTML = 'Reveal';
+
+            document.body.appendChild(reveal);
+            reveal.addEventListener('click', this.revealTimer);
+        }
+
+        this.appElements.timer.style.transform = `translate(0, -${ timer.offsetHeight }px)`;
+        reveal.style.transform = `translate(0, -${ timer.offsetHeight - 10 }px)`;
+    }
+
+    revealTimer() {
+        const reveal = document.querySelector('.reveal');
+
+        this.appElements.timer.style.transform = `translate(0, 0)`;
+        reveal.style.transform = `translate(0, -200px)`;
+        reveal.style.opacity = '0.0';
+    }
+
+    updateCountDown() {
+        const time = this.appState.getTime();
+
+        if (time <= 0) {
+            this.appState.clearInterval();
+            this.appState.isCounting = false;
+        }
+
+        const minutes = Math.floor((time / 60000) % 60);
+        const seconds = Math.floor((time / 1000) % 60);
+
+        this.appElements.minutesDiv.innerHTML = minutes < 10 ? `0${Math.floor(minutes)}` : Math.floor(minutes);
+        this.appElements.secondsDiv.innerHTML = seconds < 10 ? `0${Math.floor(seconds)}` : Math.floor(seconds);
+
+        this.appState.decrementTime();//setTime -= this.appState.throttle;
+    }
+
+    startTimer() {
+        this.appState.setInterval(window.setInterval(this.updateCountDown, 1000));
+    }
+
+    stopStart() {
+        if (this.appState.getIsCounting()) {
+            this.appState.setIsCounting(false);
+            this.appState.clearInterval();
+            this.lightDownCountdown();
+        } else {
+            if (this.appState.getTime() <= 0) this.appState.setTime(this.appState.getTimeLimit());
+
+            this.appState.setIsCounting(true);
+            this.startTimer();
+            this.lightUpCountdown();
+        }
+    }
+
+    lightUpCountdown() {
+        this.appElements.countdown.classList.add('lightUp')}
+
+    lightDownCountdown() {
+        this.appElements.countdown.classList.remove('lightUp')
+    }
+
+    setCanvasProperties() {
+        this.appElements.canvas.width = this.appElements.canvas.offsetWidth;
+        this.appElements.canvas.height = this.appElements.canvas.offsetHeight;
+
+        this.appElements.context.fillStyle = this.appState.getBackground();
+        this.appElements.context.fillRect(5, 5, (this.appElements.canvas.width - 10), (this.appElements.canvas.height - 10)); // off by 5 to preserve outline
+
+        this.appElements.context.strokeStyle = this.appState.getColor();
+        this.appElements.context.lineWidth = this.appState.getWidth();
+        this.appElements.context.lineCap = this.appState.getNib();
+    }
+
+    setLabels() {
+        this.appElements.colorLabel.innerHTML = `Pen Color: ${ this.appState.getColor() }`;
+        this.appElements.strokeLabel.innerHTML = `Pen Width: ${ this.appState.getWidth() }`;
+    }
+
+    addEventListeners() {
+        this.appElements.canvas.addEventListener('mousemove', this.draw);
+        this.appElements.canvas.addEventListener('mousedown', () => {
+            this.store();
+            this.appElements.downloadButton.enable();
+            this.appElements.undoButton.enable();
+
+            this.appState.setIsDrawing(true);
+            this.appState.setLastX(event.offsetX);
+            this.appState.setLastY(event.offsetY);
+        });
+        this.appElements.canvas.addEventListener('mouseup', () => {
+            this.appState.clearPoints()//pointsToStroke.length = 0;
+            this.appState.setIsDrawing(false);
+        });
+        this.appElements.canvas.addEventListener('mouseout', () => {
+            this.appState.clearPoints();
+            this.appState.setIsDrawing(false);
+        });
+
+        this.appElements.inputs.forEach(input => input.addEventListener('change', this.handleUpdate));
+        this.appElements.nibMenu.addEventListener('change', this.handleUpdate);
+        this.appElements.radioButtons.forEach(radio => radio.addEventListener('change', this.handleUpdate));
+        this.appElements.promptButton.addEventListener('click', () => {
+            this.prompt();
+
+            if (this.appState.getIsCounting()) this.appState.clearInterval();
+
+            this.appState.resetTime()//setTime(this.appState.getTimeLimit);
+            this.appState.setIsCounting(true);
+
+            this.startTimer();
+            this.lightUpCountdown();
+        });
+        this.appElements.undoButton.addEventListener('click', this.restore);
+        this.appElements.downloadButton.addEventListener('click', () => {
+            this.store();
+            this.downloadPic();
+            this.appElements.downloadButton.enable();
+        });
+        this.appElements.eraseAllButton.addEventListener('click', () => {
+            this.store();
+            this.eraseAll();
+            this.appElements.undoButton.enable();
+        });
+
+        this.appElements.hideButton.addEventListener('click', this.hideTimer);
+        this.appElements.stopStartButton.addEventListener('click', this.stopStart);
+    }
+}
+
+class InitialState {
+    constructor() {
+        // Without `this`, these properties are kept inside the constructor and are inaccessible elsewhere
+        let _color = '#000000';
+        let _background = 'white';
+        let _width = 10;
+        let _nib = 'round';
+        let _isDrawing = false;
+        let _lastX = 0;
+        let _lastY = 0;
+        let _pointsToStroke = [];
+        let _imageData;
+    
+        // Timer state
+        let _isCounting = false;
+        let _time = 0;
+        let _throttle = 1000;
+        let _timeLimit = 60000;
+        let _interval;
+    
+        // Prompt state
+        let _promptList = 'all';
+        let _prompts;
+
+        // Getters 
+        this.getColor = () => _color; 
+        this.getBackground = () => _background;
+        this.getWidth = () => _width;
+        this.getNib = () => _nib;
+        this.getIsDrawing = () => _isDrawing;
+        this.getPointsToStroke = () => _pointsToStroke;
+        this.getFirstX = () => _pointsToStroke[0].x;
+        this.getFirstY = () => _pointsToStroke[0].y;
+        // LastX & lastY are separate from the points array because they are based on the user moving their cursor, with or without drawing
+        this.getLastX = () => _lastX;
+        this.getLastY = () => _lastY;
+        this.getImageData = () => _imageData;
+        this.getIsCounting = () => _isCounting;
+        this.getTime = () => _time;
+        this.getThrottle = () => _throttle;
+        this.getTimeLimit = () => _timeLimit;
+        this.getInterval = () => _interval;
+        this.getPromptList = () => _promptList;
+        this.getPrompts = () => _prompts;
+
+        // Setters
+        this.setColor = function(color) {
+            if (typeof color != 'string' || color[0] != "#" || color.length != 7) throw new TypeError(`Not a valid color hex code: ${ color }`);
+
+            _color = color;
+        }
+        
+        this.setWidth = function(width) {
+            if (typeof parseInt(width) != 'number') throw new TypeError(`Not a valid width: ${ width }`);
+            if (width < 1 || width > 100) throw new RangeError(`Width is not in range: ${ width }`);
+
+            _width = width;
+        }
+        
+        this.setNib = function(nib) {
+            if (typeof nib != 'string') throw new TypeError(`Not a valid nib: ${ nib }`);
+            
+            if (nib == 'square' || nib == 'round') {
+                _nib = nib;
+            } else {
+                throw new Error(`Nib must be either square or round: ${ nib }`);
+            }
+        }
+        
+        this.setIsDrawing = function(isDrawing) {
+            if (typeof isDrawing != 'boolean') throw new TypeError(`Not a valid isDrawing value: ${ isDrawing }`);
+
+            _isDrawing = isDrawing;
+        }
+        
+        this.addPoint = function(point) {
+            if (!point.x || !point.y || typeof point.x != 'number' || typeof point.y != 'number') throw new TypeError(`Arg lacks valid coordinate values: x ${ point.x } y ${ point.y }`);
+
+            _pointsToStroke.push({ x: point.x, y: point.y });
+        }
+        
+        this.clearPoints = () => _pointsToStroke.length = 0;
+        
+        this.setLastX = function(x) {
+            if (typeof x != 'number') throw new TypeError(`Not a number: ${ x }`);
+
+            _lastX = x;
+        }
+        this.setLastY = function(y) {
+            if (typeof y != 'number') throw new TypeError(`Not a number: ${ y }`);
+
+            _lastY = y;
+        }
+        this.setImageData = function(imageData) {
+            if (typeof imageData != 'string' || !imageData.startsWith('data:image/png;base64,')) throw new TypeError(`Not a valid image data URI: ${ imageData }`);
+
+            _imageData = imageData;
+        }
+
+        this.setTime = function(time) {
+            if (typeof time != 'number') throw new TypeError(`Not a valid time: ${ time }`);
+            if (time < 0 || time > _timeLimit) throw new RangeError(`Time not in range: ${ time }`);
+
+            _time = time;
+        }
+
+        this.resetTime = () => _time = _timeLimit;
+
+        this.decrementTime = () => _time -= _throttle;
+        
+        this.setIsCounting = function(isCounting) {
+            if (typeof isCounting != 'boolean') throw new TypeError(`Not a valid isDrawingValue: ${ isCounting }`);
+
+            _isCounting = isCounting;
+        }
+
+        this.clearInterval = () => clearInterval(_interval);
+
+        this.setInterval = function(interval) {
+            if (typeof interval != 'number') throw new TypeError(`Not a valid interval value: ${ interval }`);
+
+            _interval = interval;
+        }
+
+        this.setPromptList = function(key) {
+            if (typeof key != 'string') throw new TypeError(`Not a valid prompt list key: ${ key }`);
+            
+            if (key === 'all' || key === 'fun' || key === 'serious') {
+                _promptList = key;
+            } else {
+                throw new Error(`The only valid prompt list values are all, fun, or serious: ${ key }`);
+            }
+        }
+    }
+}
+
+class GuiReferences {
+    constructor(canvas, context, promptDisplay, radioButtons, promptList, promptButton, timer, hideButton, countdown, minutesDiv, secondsDiv, stopStartButton, inputs, colorInput, widthInput, nibInput, colorLabel, strokeLabel, nibMenu, undoButton, downloadButton, eraseAllButton) {
+        this.canvas = canvas;
+        this.context = context;
+
+        this.promptDisplay = promptDisplay;
+        this.radioButtons = radioButtons;
+        this.promptList = promptList;
+        this.promptButton = promptButton;
+
+        this.timer = timer;
+        this.hideButton = hideButton;
+        this.countdown = countdown;
+        this.minutesDiv = minutesDiv;
+        this.secondsDiv = secondsDiv;
+        this.stopStartButton = stopStartButton;
+
+        this.inputs = inputs;
+        this.colorInput = colorInput;
+        this.widthInput = widthInput;
+        this.nibInput = nibInput;
+
+        this.colorLabel = colorLabel;
+        this.strokeLabel = strokeLabel;
+        this.nibMenu = nibMenu
+
+        this.undoButton = undoButton;
+        this.downloadButton = downloadButton;
+        this.eraseAllButton = eraseAllButton;
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
