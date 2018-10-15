@@ -1,7 +1,3 @@
-// This is a very long file because vanilla doesn't support imports. 
-// If we wanted to separate things out, we could do it ES6 style (import/export), or CommonJS style (export/require).
-// Either choice would mean adding dependencies.
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -83,12 +79,13 @@ class GuiReferences {
         this.widthInputValueValue = widthInputValue;
         this.nibInputValue = nibInputValue;
 
-
         this.undoButton = undoButton;
         this.downloadButton = downloadButton;
         this.eraseAllButton = eraseAllButton;
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class StateOrganizer {
     constructor() {
@@ -137,7 +134,7 @@ class StateOrganizer {
 
         // Setters
         this.setColor = function(color) {
-            if (typeof color !== 'string' || color[0] !== "#" || color.length !== 7) throw new TypeError(`Not a valid color hex code: ${ color }`);
+            if (typeof color !== 'string' || color[0] !== "#" || color.length !== 7 || isNaN(parseInt(color.slice(1), 16))) throw new TypeError(`Not a valid color hex code: ${ color }`);
 
             _color = color;
         }
@@ -212,6 +209,7 @@ class StateOrganizer {
 
         this.setInterval = function(interval) {
             if (typeof interval != 'number') throw new TypeError(`Not a valid interval value: ${ interval }`);
+            if (interval < 0 || interval > _timeLimit) throw new RangeError(`Interval is out of range ${ interval }`);
 
             _interval = interval;
         }
@@ -233,6 +231,8 @@ class StateOrganizer {
         }
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Controller {
     constructor(appState, appElements) {
@@ -271,7 +271,7 @@ class Controller {
     draw(event) {
         if (!this.appState.getIsDrawing()) return;
 
-        this.appState.addPoint({ x: this.appState.getLastX(), y: this.appState.getLastY() })//pointsToStroke.push({ x: this.appState.lastX, y: this.appState.lastY });
+        this.appState.addPoint({ x: this.appState.getLastX(), y: this.appState.getLastY() })
 
         this.appElements.context.beginPath();
         this.appElements.context.moveTo(this.appState.getFirstX, this.appState.getFirstY);
@@ -341,13 +341,13 @@ class Controller {
     restore(event) {
         let savedImg = new Image();
         savedImg.src = this.appState.getImageData();
+        
+        this.store();
 
         savedImg.onload = () => { // If you do not specify the below code inside of a closure onload of the image, you will get an aggravating effect of the canvas clearing on the first click and then behaving correctly, i.e. restoring, on the second click
             this.eraseAll();
             this.appElements.context.drawImage(savedImg, 0, 0, this.appElements.canvas.width, this.appElements.canvas.height);
         }
-
-        event.target.disable();
     }
 
     store() {
@@ -361,7 +361,7 @@ class Controller {
     eraseAll() {
         this.appElements.context.clearRect(0, 0, this.appElements.canvas.width, this.appElements.canvas.height);
         this.appElements.context.fillStyle = this.appState.getBackground();
-        this.appElements.context.fillRect(5, 5, (this.appElements.canvas.width - 10), (this.appElements.canvas.height - 10)); // off by 5 to preserve outline
+        this.appElements.context.fillRect(5, 5, (this.appElements.canvas.width - 10), (this.appElements.canvas.height - 10)); // off by 5 to preserve canvas outline
     }
 
     hideTimer() {
@@ -405,7 +405,7 @@ class Controller {
         this.appElements.minutesDiv.innerHTML = minutes < 10 ? `0${Math.floor(minutes)}` : Math.floor(minutes);
         this.appElements.secondsDiv.innerHTML = seconds < 10 ? `0${Math.floor(seconds)}` : Math.floor(seconds);
 
-        this.appState.decrementTime();//setTime -= this.appState.throttle;
+        this.appState.decrementTime();
     }
 
     startTimer() {
@@ -462,7 +462,7 @@ class Controller {
             this.appState.setLastY(event.offsetY);
         });
         this.appElements.canvas.addEventListener('mouseup', () => {
-            this.appState.clearPoints()//pointsToStroke.length = 0;
+            this.appState.clearPoints()
             this.appState.setIsDrawing(false);
         });
         this.appElements.canvas.addEventListener('mouseout', () => {
@@ -478,13 +478,16 @@ class Controller {
 
             if (this.appState.getIsCounting()) this.appState.clearInterval();
 
-            this.appState.resetTime()//setTime(this.appState.getTimeLimit);
+            this.appState.resetTime()
             this.appState.setIsCounting(true);
 
             this.startTimer();
             this.lightUpCountdown();
         });
-        this.appElements.undoButton.addEventListener('click', this.restore);
+        this.appElements.undoButton.addEventListener('click', () => { 
+            this.restore();
+            //this.appElements.undoButton.disable();
+        });
         this.appElements.downloadButton.addEventListener('click', () => {
             this.store();
             this.downloadPic();
