@@ -1,7 +1,7 @@
-let GuiReferences = require('./GuiReferences');
-let StateOrganizer = require('./StateOrganizer');
+import GuiReferences from './GuiReferences';
+import StateOrganizer from './StateOrganizer';
 
-module.exports = class Controller {
+export default class Controller {
   constructor(appState, appElements) {
       if (!(appState instanceof StateOrganizer)) throw TypeError('AppState must be of type StateOrganizer');
       if (!(appElements instanceof GuiReferences)) throw TypeError('AppElements must be of type GUIReferences');

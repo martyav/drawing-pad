@@ -1,4 +1,4 @@
-module.exports = class StateOrganizer {
+export default class StateOrganizer {
     constructor() {
         // Without `this`, these properties are kept inside the constructor and are inaccessible elsewhere, making them essentially private
         let _color = '#000000';
