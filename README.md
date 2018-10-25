@@ -1,7 +1,3 @@
-Check out the drawing pad at [https://martyav.github.io/drawing-pad/](https://martyav.github.io/drawing-pad/)
+This is a drawing pad app built using ES6 and HTML5.
 
-# To-Do
- * Responsiveness -- the menu & canvas size are inappropriate for small screens
- * Touch events
- * Keyboard short cuts?
- * Brushes?
+You can start drawing immediately, or click on the prompt button and see if you can complete the art prompt within a minute.
