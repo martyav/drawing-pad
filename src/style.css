@@ -106,15 +106,15 @@ button:disabled {
 }
 
 #artPrompt {
-    background: rgb(255, 160, 160);
+    /* background: rgb(255, 160, 160); */
 }
 
 #tool {
-    background: rgb(138, 255, 255);
+    /* background: rgb(138, 255, 255); */
 }
 
 #state {
-    background: rgb(255, 255, 138);
+    /* background: rgb(255, 255, 138); */
 }
 
 li:last-child {
